@@ -5,7 +5,5 @@ dist/
 .env.local
 .expo/
 .DS_Store
-infra/routing/data/*
-!infra/routing/data/.gitkeep
 coverage/
 *.log
