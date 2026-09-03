@@ -1,0 +1,40 @@
+{
+  "comment": "Expo reads the `expo` key only; this note is ignored by the CLI. userInterfaceStyle is pinned to light on purpose - an undesigned dark mode is worse than none, and the palette in src/theme/tokens.ts is tuned for direct sunlight on a cheap LCD, not for a dark room.",
+  "expo": {
+    "name": "SwasthyaSetu",
+    "slug": "swasthyasetu",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "swasthyasetu",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "backgroundColor": "#FBFAF7",
+      "resizeMode": "contain"
+    },
+    "android": {
+      "package": "in.swasthyasetu.app",
+      "adaptiveIcon": { "backgroundColor": "#FBFAF7" },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "in.swasthyasetu.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Your location is used only to sort nearby health facilities by distance. It stays on this phone."
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Your location is used only to sort nearby health facilities by distance. It stays on this phone."
+        }
+      ]
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

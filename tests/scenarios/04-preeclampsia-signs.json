@@ -1,0 +1,25 @@
+{
+  "id": "04-preeclampsia-signs",
+  "title": "Pregnant, severe headache and blurred vision",
+  "comment": "Three separate signs of the same danger. The rule fires on the combination; the reasons must be readable by a frightened family and must not name the condition.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 276,
+      "sex": "female",
+      "pregnancy": "yes"
+    },
+    "symptoms": [
+      "BLURRED_VISION",
+      "SWELLING_FACE_HANDS"
+    ],
+    "answers": {
+      "HEADACHE_SEVERE": true
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_PREG_SEVERE_HEADACHE_VISION"
+    ]
+  }
+}

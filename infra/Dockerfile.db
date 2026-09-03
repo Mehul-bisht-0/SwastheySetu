@@ -1,0 +1,15 @@
+# FILE: infra/Dockerfile.db
+# PLAN: IMPLEMENTATION_PLAN.md 4.1
+# STATUS: COMPLETE - do not modify
+#
+# PostGIS base + pgvector. Verify BOTH extensions install in Phase 0:
+#   docker compose -f infra/docker-compose.yml up -d db
+#   docker exec -it swasthyasetu-db psql -U swasthya -d swasthyasetu \
+#     -c "SELECT postgis_version();" -c "CREATE EXTENSION IF NOT EXISTS vector;"
+# This is the most likely early blocker. If the pgvector package name differs for
+# the base image's PG major version, fix it HERE, not by dropping the extension.
+FROM postgis/postgis:17-3.5
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-17-pgvector \
+ && rm -rf /var/lib/apt/lists/*

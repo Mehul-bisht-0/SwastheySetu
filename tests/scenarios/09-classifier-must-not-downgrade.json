@@ -1,0 +1,25 @@
+{
+  "id": "09-classifier-must-not-downgrade",
+  "title": "Red flag present alongside otherwise mild answers",
+  "comment": "GUARDRAIL 8. Everything except the one red flag is reassuring, so a classifier that ran afterwards and blended results would produce something below EMERGENCY. It must never run. If this fixture ever returns anything but EMERGENCY, evaluate.ts has stopped returning early.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 240,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "CONVULSION"
+    ],
+    "answers": {
+      "DURATION_HOURS": 1,
+      "DRINKING": "well"
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_CONVULSION"
+    ]
+  }
+}

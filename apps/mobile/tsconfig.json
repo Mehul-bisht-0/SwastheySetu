@@ -1,0 +1,18 @@
+{
+  "//": "Not part of the `tsc -b` project graph. React Native's JSX and DOM-free lib set do not mix with the Node settings in tsconfig.base.json, so this config stands alone and runs as `npm --prefix apps/mobile run typecheck`.",
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@swasthyasetu/core": ["../../packages/core/src/index.ts"],
+      "@swasthyasetu/contracts": ["../../packages/contracts/src/index.ts"]
+    }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts"],
+  "exclude": ["node_modules"]
+}

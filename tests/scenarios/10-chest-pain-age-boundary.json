@@ -1,0 +1,24 @@
+{
+  "id": "10-chest-pain-age-boundary",
+  "title": "Chest pain at exactly 35 years",
+  "comment": "The rule uses a 35-year threshold (420 months). Boundary fixtures exist because off-by-one errors in an age comparison are invisible in review and change who gets sent to a hospital. Exactly 420 months must fire.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 420,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "CHEST_PAIN"
+    ],
+    "answers": {
+      "DURATION_HOURS": 3
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_CHEST_PAIN_ADULT"
+    ]
+  }
+}

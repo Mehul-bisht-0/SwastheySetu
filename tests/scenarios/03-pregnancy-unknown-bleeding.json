@@ -1,0 +1,27 @@
+{
+  "id": "03-pregnancy-unknown-bleeding",
+  "title": "Heavy bleeding, pregnancy status unknown",
+  "comment": "THE SAFETY-BIAS FIXTURE. `pregnancy` is 'unknown', not 'yes'. mayBePregnant() must treat it as a pregnancy, so the obstetric rule fires and capability requirements include CAESAREAN. If someone 'simplifies' mayBePregnant to a strict equality check, this is the test that catches it.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 312,
+      "sex": "female",
+      "pregnancy": "unknown"
+    },
+    "symptoms": [
+      "BLEEDING_HEAVY"
+    ],
+    "answers": {}
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_PREG_BLEEDING"
+    ],
+    "requiredTags": [
+      "DELIVERY",
+      "CAESAREAN"
+    ],
+    "minLevel": 3
+  }
+}

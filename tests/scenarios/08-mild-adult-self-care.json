@@ -1,0 +1,22 @@
+{
+  "id": "08-mild-adult-self-care",
+  "title": "Healthy adult, three days of cough",
+  "comment": "No red flag, low score. SELF_CARE is a real answer and the system has to be willing to give it — an app that sends everyone to a clinic is an app that wastes the money of people who have none.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 336,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "COUGH"
+    ],
+    "answers": {
+      "DURATION_HOURS": 72
+    }
+  },
+  "expect": {
+    "tier": "SELF_CARE",
+    "ruleIds": []
+  }
+}

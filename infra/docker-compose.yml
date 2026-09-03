@@ -1,0 +1,40 @@
+# FILE: infra/docker-compose.yml
+# PLAN: IMPLEMENTATION_PLAN.md 4.2
+# STATUS: COMPLETE - do not modify
+#
+# Two services. `db` is always needed. `osrm` is build-time only (profile: routing)
+# and does NOT need to be running for the demo - travel times are precomputed into
+# Postgres and served from an index.
+services:
+  db:
+    # DECIDE(resolved): no official image ships PostGIS AND pgvector together.
+    # We build from the PostGIS base and add pgvector - PostGIS is load-bearing in
+    # v1, pgvector is not needed until RAG. See infra/Dockerfile.db
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: swasthyasetu-db
+    environment:
+      POSTGRES_DB: swasthyasetu
+      POSTGRES_USER: swasthya
+      POSTGRES_PASSWORD: swasthya_dev_pw
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swasthya -d swasthyasetu"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: swasthyasetu-osrm
+    command: osrm-routed --algorithm mld /data/district.osrm
+    volumes:
+      - ./routing/data:/data
+    ports: ["5000:5000"]
+    profiles: ["routing"]
+
+volumes:
+  pgdata: {}

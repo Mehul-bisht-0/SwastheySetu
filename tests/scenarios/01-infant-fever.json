@@ -1,0 +1,24 @@
+{
+  "id": "01-infant-fever",
+  "title": "Six-week-old with fever",
+  "comment": "A fever in a baby under two months is an emergency on its own. Nothing else in this encounter is alarming, which is the point: the age is what makes it one, and a scoring model working from symptom severity would not have found it.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 1,
+      "sex": "female",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "FEVER"
+    ],
+    "answers": {
+      "DURATION_HOURS": 12
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_INFANT_FEVER"
+    ]
+  }
+}

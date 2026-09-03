@@ -1,0 +1,25 @@
+﻿{
+  "name": "swasthyasetu",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "db:up": "docker compose -f infra/docker-compose.yml up -d db",
+    "db:migrate": "npm -w @swasthyasetu/api run migrate",
+    "db:seed": "npm -w @swasthyasetu/api run seed",
+    "dev:api": "npm -w @swasthyasetu/api run dev",
+    "dev:mobile": "npm -w @swasthyasetu/mobile run start",
+    "test:core": "node --test packages/core/src/**/*.test.ts",
+    "test:api": "npm -w @swasthyasetu/api run test",
+    "typecheck": "tsc -b",
+    "verify": "npm run typecheck && npm run test:core && npm run test:api && node scripts/check-no-secrets.mjs",
+    "routing:precompute": "npm -w @swasthyasetu/api run routing:precompute"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.9.0"
+  }
+}

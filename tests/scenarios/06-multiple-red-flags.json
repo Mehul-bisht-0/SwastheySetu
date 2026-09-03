@@ -1,0 +1,24 @@
+{
+  "id": "06-multiple-red-flags",
+  "title": "Unconscious after a convulsion",
+  "comment": "Two red flags fire and BOTH must appear in the reasons. evaluateRedFlags returns every rule that matched, not the first: the extra reason matters to whoever is deciding whether to hire a vehicle.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 96,
+      "sex": "female",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "UNCONSCIOUS",
+      "CONVULSION"
+    ],
+    "answers": {}
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_UNCONSCIOUS",
+      "RF_CONVULSION"
+    ]
+  }
+}

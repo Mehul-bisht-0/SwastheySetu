@@ -1,0 +1,26 @@
+{
+  "id": "07-bloody-diarrhoea-child",
+  "title": "Three-year-old, diarrhoea with blood",
+  "comment": "GO_NOW, not EMERGENCY. The ladder has to have a working middle: if everything worrying becomes an emergency, families stop believing the emergencies.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 36,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "DIARRHOEA"
+    ],
+    "answers": {
+      "BLOOD_IN_STOOL": true,
+      "DRINKING": "poorly",
+      "DURATION_HOURS": 30
+    }
+  },
+  "expect": {
+    "tier": "GO_NOW",
+    "ruleIds": [
+      "RF_BLOODY_DIARRHOEA_CHILD"
+    ]
+  }
+}

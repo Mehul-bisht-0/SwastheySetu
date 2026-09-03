@@ -1,0 +1,25 @@
+{
+  "id": "02-child-fast-breathing",
+  "title": "Fourteen-month-old, fever and fast breathing",
+  "comment": "The demo case in docs/DEMO.md. Two rules can plausibly be read as firing; only the fast-breathing one does, and the result must list it by name so the reason on screen is checkable.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 14,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "FEVER",
+      "FAST_BREATHING"
+    ],
+    "answers": {
+      "DURATION_HOURS": 20
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_CHILD_FAST_BREATHING"
+    ]
+  }
+}

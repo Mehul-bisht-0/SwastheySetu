@@ -1,0 +1,25 @@
+{
+  "id": "05-stroke-signs",
+  "title": "Adult, sudden one-sided weakness and speech difficulty",
+  "comment": "Time-critical and easy to under-triage because the person is awake and talking. Two symptoms, one rule.",
+  "encounter": {
+    "patient": {
+      "ageMonths": 744,
+      "sex": "male",
+      "pregnancy": "no"
+    },
+    "symptoms": [
+      "WEAKNESS_ONE_SIDE",
+      "DIFFICULTY_SPEAKING"
+    ],
+    "answers": {
+      "DURATION_HOURS": 2
+    }
+  },
+  "expect": {
+    "tier": "EMERGENCY",
+    "ruleIds": [
+      "RF_STROKE_SIGNS"
+    ]
+  }
+}
