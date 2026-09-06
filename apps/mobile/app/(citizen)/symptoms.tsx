@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { View, FlatList, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { FlatList, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../../src/ui/Screen.tsx";
 import { Button } from "../../src/ui/Button.tsx";
 import { SymptomTile } from "../../src/ui/SymptomTile.tsx";
+import { StepIndicator } from "../../src/ui/StepIndicator.tsx";
 import { toggleSymptom, getDraft } from "../../src/state/triageDraft.ts";
 import { t } from "../../src/i18n/strings.ts";
+import type { StringKey } from "../../src/i18n/strings.ts";
 import { ink, type, space } from "../../src/theme/tokens.ts";
 import type { SymptomCode } from "@swasthyasetu/core";
 
@@ -18,21 +20,15 @@ const SYMPTOM_ORDER: SymptomCode[] = [
   "SEVERE_ABDOMINAL_PAIN", "RASH", "INJURY", "BURNING_URINATION",
 ];
 
-const SYMPTOM_LABELS: Record<SymptomCode, string> = {
-  UNCONSCIOUS: "Not waking up", CONVULSION: "Fits / seizures", FAST_BREATHING: "Fast or difficult breathing",
-  BLEEDING_HEAVY: "Heavy bleeding", NOT_FEEDING: "Not eating or drinking", FEVER: "Fever",
-  COUGH: "Cough", DIARRHOEA: "Loose stools", VOMITING: "Vomiting", CHEST_PAIN: "Chest pain",
-  WEAKNESS_ONE_SIDE: "Sudden weakness on one side", DIFFICULTY_SPEAKING: "Sudden speech difficulty",
-  BLURRED_VISION: "Blurred vision", SWELLING_FACE_HANDS: "Face or hand swelling",
-  REDUCED_FETAL_MOVEMENT: "Baby moving less", SEVERE_ABDOMINAL_PAIN: "Severe stomach pain",
-  RASH: "Rash or spots", INJURY: "Injury", BURNING_URINATION: "Burning urination",
+const SYMPTOM_LABELS: Record<SymptomCode, StringKey> = {
+  UNCONSCIOUS: "ivr.symptom.UNCONSCIOUS", CONVULSION: "ivr.symptom.CONVULSION", FAST_BREATHING: "ivr.symptom.FAST_BREATHING",
+  BLEEDING_HEAVY: "ivr.symptom.BLEEDING_HEAVY", NOT_FEEDING: "ivr.symptom.NOT_FEEDING", FEVER: "ivr.symptom.FEVER",
+  COUGH: "ivr.symptom.COUGH", DIARRHOEA: "ivr.symptom.DIARRHOEA", VOMITING: "ivr.symptom.VOMITING", CHEST_PAIN: "ivr.symptom.CHEST_PAIN",
+  WEAKNESS_ONE_SIDE: "ivr.symptom.WEAKNESS_ONE_SIDE", DIFFICULTY_SPEAKING: "ivr.symptom.DIFFICULTY_SPEAKING",
+  BLURRED_VISION: "ivr.symptom.BLURRED_VISION", SWELLING_FACE_HANDS: "ivr.symptom.SWELLING_FACE_HANDS",
+  REDUCED_FETAL_MOVEMENT: "ivr.symptom.REDUCED_FETAL_MOVEMENT", SEVERE_ABDOMINAL_PAIN: "ivr.symptom.SEVERE_ABDOMINAL_PAIN",
+  RASH: "ivr.symptom.RASH", INJURY: "ivr.symptom.INJURY", BURNING_URINATION: "ivr.symptom.BURNING_URINATION",
 };
-
-// Ensure even grid layout by adding a spacer slot if the symptom count is odd
-const GRID_DATA: (SymptomCode | null)[] =
-  SYMPTOM_ORDER.length % 2 === 0
-    ? SYMPTOM_ORDER
-    : [...SYMPTOM_ORDER, null];
 
 export default function SymptomsScreen(): React.ReactNode {
   const router = useRouter();
@@ -53,6 +49,7 @@ export default function SymptomsScreen(): React.ReactNode {
     <Screen
       title={t("symptoms.title")}
       scroll={false}
+      onBack={() => router.back()}
       footer={
         <Button
           label={t("symptoms.continue")}
@@ -61,29 +58,21 @@ export default function SymptomsScreen(): React.ReactNode {
         />
       }
     >
-      <Text style={styles.hint}>
-        {canContinue ? t("symptoms.help") : t("symptoms.none")}
-      </Text>
+      <StepIndicator current={2} total={3} label={t("symptoms.title")} showLabel={false} />
+      <Text style={styles.hint}>{t("symptoms.help")}</Text>
       <FlatList
-        data={GRID_DATA}
-        keyExtractor={(c, idx) => c ?? `placeholder-${idx}`}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
+        data={SYMPTOM_ORDER}
+        keyExtractor={(code) => code}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          if (!item) {
-            return <View style={styles.tilePlaceholder} />;
-          }
-          return (
-            <SymptomTile
-              code={item}
-              label={SYMPTOM_LABELS[item] ?? item}
-              selected={selected.has(item)}
-              onToggle={() => toggle(item)}
-            />
-          );
-        }}
+        renderItem={({ item }) => (
+          <SymptomTile
+            code={item}
+            label={t(SYMPTOM_LABELS[item])}
+            selected={selected.has(item)}
+            onToggle={() => toggle(item)}
+          />
+        )}
       />
     </Screen>
   );
@@ -92,20 +81,10 @@ export default function SymptomsScreen(): React.ReactNode {
 const styles = StyleSheet.create({
   hint: {
     ...(type.body as object),
-    color: ink.muted,
-    textAlign: "center",
-    marginBottom: space.sm,
+    color: ink.body,
+    marginBottom: space.md,
   },
   listContent: {
     paddingBottom: space.lg,
-  },
-  columnWrapper: {
-    gap: space.sm,
-    marginBottom: space.sm,
-  },
-  tilePlaceholder: {
-    flex: 1,
-    minHeight: 100,
-    backgroundColor: "transparent",
   },
 });

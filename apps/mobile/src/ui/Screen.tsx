@@ -1,18 +1,35 @@
 ﻿import React from "react";
-import { ScrollView, View, Text, StyleSheet } from "react-native";
+import { ScrollView, View, Text, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { paper, type, space, elevation } from "../theme/tokens.ts";
+import { paper, ink, type, space, elevation, touch } from "../theme/tokens.ts";
+import { t } from "../i18n/strings.ts";
 
 export function Screen(props: {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
   scroll?: boolean;
+  onBack?: () => void;
 }): React.ReactNode {
   const scroll = props.scroll !== false;
   const content = (
     <>
-      {props.title ? <Text style={styles.title}>{props.title}</Text> : null}
+      {props.title ? (
+        <View style={styles.header}>
+          {props.onBack ? (
+            <Pressable
+              onPress={props.onBack}
+              accessibilityRole="button"
+              accessibilityLabel={t("action.back")}
+              style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+            >
+              <Text style={styles.backArrow}>{"\u2039"}</Text>
+              <Text style={styles.backLabel}>{t("action.back")}</Text>
+            </Pressable>
+          ) : null}
+          <Text style={[styles.title, props.onBack && styles.titleWithBack]}>{props.title}</Text>
+        </View>
+      ) : null}
       {props.children}
     </>
   );
@@ -39,6 +56,18 @@ const styles = StyleSheet.create({
   scroll: { padding: space.md },
   scrollWithFooter: { paddingBottom: 96 },
   scrollNoFooter: { paddingBottom: space.xl },
-  title: { ...(type.title as object), color: "#171512", marginBottom: space.md },
+  header: { marginBottom: space.lg },
+  title: { ...(type.title as object), color: ink.strong },
+  titleWithBack: { marginTop: space.sm },
+  back: {
+    alignSelf: "flex-start",
+    minHeight: touch.min,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: space.md,
+  },
+  backArrow: { fontSize: 34, lineHeight: 36, color: ink.strong, marginRight: space.xs },
+  backLabel: { ...(type.body as object), color: ink.strong, fontWeight: "600" },
+  pressed: { opacity: 0.65 },
   footer: { padding: space.md, backgroundColor: paper.raised },
 });

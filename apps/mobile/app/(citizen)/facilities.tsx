@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, Linking } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Screen } from "../../src/ui/Screen.tsx";
 import { Card } from "../../src/ui/Card.tsx";
 import { Button } from "../../src/ui/Button.tsx";
@@ -16,6 +16,7 @@ import { getLocale } from "../../src/i18n/strings.ts";
 import { listVillages } from "../../src/db/dao/villages.ts";
 
 export default function FacilitiesScreen(): React.ReactNode {
+  const router = useRouter();
   const { reportId } = useLocalSearchParams<{ reportId: string }>();
   const [outcome, setOutcome] = useState<RankingOutcome | null>(null);
   const [near, setNear] = useState<{ lat: number; lon: number } | null>(null);
@@ -60,7 +61,7 @@ export default function FacilitiesScreen(): React.ReactNode {
   const facilities = outcome?.results ?? [];
 
   if (!near) return (
-    <Screen title={t("facilities.title")}>
+    <Screen title={t("facilities.title")} onBack={() => router.back()}>
       <Text style={styles.callFirst}>{hindi ? "नज़दीकी केंद्रों की दूरी के लिए अपनी जगह साझा करें।" : "Share your location to calculate distances to nearby facilities."}</Text>
       <Button label={hindi ? "मेरी जगह का उपयोग करें" : "Use my location"} busy={locating} onPress={locate} />
       {locationError ? <Text style={styles.empty}>{hindi ? "जगह नहीं मिल सकी। फ़ोन की लोकेशन चालू करके फिर कोशिश करें।" : "Could not get your location. Enable device location and try again."}</Text> : null}
@@ -74,14 +75,14 @@ export default function FacilitiesScreen(): React.ReactNode {
 
   if (facilities.length === 0) {
     return (
-      <Screen title={t("facilities.title")}>
+      <Screen title={t("facilities.title")} onBack={() => router.back()}>
         <Text style={styles.empty}>{t("facilities.empty")}</Text>
       </Screen>
     );
   }
 
   return (
-    <Screen title={t("facilities.title")} scroll={false}>
+    <Screen title={t("facilities.title")} scroll={false} onBack={() => router.back()}>
       <Text style={styles.callFirst}>{hindi ? "डेमो केंद्र और अभ्यास की रिपोर्ट — जानकारी फ़ोन पर जाँचें।" : "Demo facility records and simulated reports. Confirm details by phone."}</Text>
       <Text style={styles.callFirst}>{t("freshness.callFirst")}</Text>
       {outcome?.fallbackApplied && (

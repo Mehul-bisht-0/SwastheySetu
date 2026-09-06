@@ -7,6 +7,7 @@ import type { AnswerValue } from "@swasthyasetu/core";
 import { Screen } from "../../src/ui/Screen.tsx";
 import { Button } from "../../src/ui/Button.tsx";
 import { Field } from "../../src/ui/Field.tsx";
+import { StepIndicator } from "../../src/ui/StepIndicator.tsx";
 import { answer, toEncounter } from "../../src/state/triageDraft.ts";
 import { saveReport } from "../../src/db/dao/reports.ts";
 import { getLocale, t } from "../../src/i18n/strings.ts";
@@ -52,7 +53,7 @@ export default function QuestionsScreen(): React.ReactNode {
   }
   const validNumber = /^\d+$/.test(numeric) && Number(numeric) <= (question?.max ?? 0);
   return (
-    <Screen title={locale === "hi" ? "कुछ और सवाल" : "Follow-up questions"}>
+    <Screen title={locale === "hi" ? "कुछ और सवाल" : "Follow-up questions"} onBack={() => router.back()}>
       {error ? (
         <View style={styles.container}>
           <Text style={styles.errorText}>{t("error.saveFailed")}</Text>
@@ -60,6 +61,11 @@ export default function QuestionsScreen(): React.ReactNode {
         </View>
       ) : question ? (
         <View style={styles.container}>
+          <StepIndicator
+            current={index + 1}
+            total={questions.length}
+            label={t("ivr.progress", { current: index + 1, total: questions.length })}
+          />
           <Text style={styles.prompt}>{prompt}</Text>
           {question.options ? (
             <View style={styles.buttonGroup}>

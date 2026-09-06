@@ -32,22 +32,23 @@ export function Field(props: {
 }
 
 export function Choice<T extends string>(props: {
-  label: string;
+  label?: string;
   options: Array<{ value: T; label: string; help?: string }>;
   value: T | null;
   onChange: (v: T) => void;
+  stacked?: boolean;
 }): React.ReactNode {
   return (
     <View style={styles.wrap} accessibilityRole="radiogroup" accessibilityLabel={props.label}>
-      <Text style={styles.label}>{props.label}</Text>
-      <View style={styles.row}>
+      {props.label ? <Text style={styles.label}>{props.label}</Text> : null}
+      <View style={props.stacked ? styles.column : styles.row}>
         {props.options.map((opt) => {
           const selected = props.value === opt.value;
           return (
             <Pressable
               key={opt.value}
               onPress={() => props.onChange(opt.value)}
-              style={[styles.segment, selected && styles.segmentSelected]}
+              style={[styles.segment, props.stacked && styles.segmentStacked, selected && styles.segmentSelected]}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               accessibilityLabel={opt.label}
@@ -69,7 +70,9 @@ const styles = StyleSheet.create({
   input: { minHeight: touch.min, backgroundColor: paper.raised, borderRadius: radius.chip, paddingHorizontal: space.md, ...(type.body as object), color: ink.strong },
   error: { ...(type.meta as object), color: "#8F1D14", marginTop: 4 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  column: { gap: space.sm },
   segment: { flex: 1, minHeight: touch.min, borderWidth: 1, borderColor: paper.rule, borderRadius: radius.chip, backgroundColor: paper.raised, alignItems: "center", justifyContent: "center", padding: space.sm },
+  segmentStacked: { flex: 0, width: "100%" },
   segmentSelected: { borderWidth: 2, borderColor: ink.strong, backgroundColor: paper.sunken },
   segLabel: { ...(type.body as object), color: ink.body, textAlign: "center" },
   segLabelSelected: { ...(type.body as object), fontWeight: "600", color: ink.strong },

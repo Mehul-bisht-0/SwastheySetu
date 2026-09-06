@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Text, View, StyleSheet } from "react-native";
-import { paper, ink, radius } from "../theme/tokens.ts";
+import { paper, ink, radius, space, touch, type } from "../theme/tokens.ts";
 
 export function SymptomTile(props: {
   code: string;
@@ -32,17 +32,16 @@ export function SymptomTile(props: {
 
 const styles = StyleSheet.create({
   tile: {
-    flex: 1,
-    minHeight: 100,
+    minHeight: touch.tile,
     borderWidth: 1.5,
     borderColor: paper.rule,
     borderRadius: radius.card,
     backgroundColor: paper.raised,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 28,
-    paddingBottom: 16,
-    paddingHorizontal: 12,
+    paddingVertical: space.md,
+    paddingHorizontal: space.md,
+    marginBottom: space.sm,
   },
   selected: {
     borderWidth: 2,
@@ -53,10 +52,9 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   label: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...(type.body as object),
+    flex: 1,
     color: ink.body,
-    textAlign: "center",
     fontWeight: "500",
   },
   labelSel: {
@@ -64,26 +62,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   indicator: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: paper.rule,
     backgroundColor: paper.raised,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: space.md,
   },
   indicatorSelected: {
     borderColor: ink.strong,
     backgroundColor: ink.strong,
   },
   tick: {
-    fontSize: 12,
+    fontSize: 18,
     color: paper.raised,
     fontWeight: "700",
-    lineHeight: 14,
+    lineHeight: 22,
   },
 });
