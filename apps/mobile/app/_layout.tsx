@@ -15,22 +15,48 @@ function Splash(): React.ReactNode {
   return <View style={{ flex: 1, backgroundColor: paper.base, alignItems: "center", justifyContent: "center" }}><Text>SwasthyaSetu</Text></View>;
 }
 
+// A boot failure used to leave the app on Splash forever: the async IIFE below
+// was fire-and-forget, so a throw became an unhandled rejection and `ready` was
+// never set. That is indistinguishable from a hang on a phone with no console.
+// Every failure now reaches the screen instead.
+function BootError({ message }: { message: string }): React.ReactNode {
+  return (
+    <View style={{ flex: 1, backgroundColor: paper.base, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <Text style={{ fontWeight: "700", marginBottom: 8 }}>SwasthyaSetu could not start</Text>
+      <Text style={{ textAlign: "center" }}>{message}</Text>
+    </View>
+  );
+}
+
 export default function RootLayout(): React.ReactNode {
   const [ready, setReady] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
-      await initDb();
-      releaseStale();
-      setLocale("hi");
-      await restoreSession();
-      setReady(true);
+      try {
+        await initDb();
+        releaseStale();
+        setLocale("en");
+        await restoreSession();
+      } catch (e) {
+        setBootError(String(e));
+      } finally {
+        // Always leave the splash, even on failure, so the error is visible.
+        setReady(true);
+      }
     })();
   }, []);
 
-  useEffect(() => startSyncDaemon(), []);
+  // Registered only after the database exists: the sync daemon's callbacks read
+  // it, and they used to be able to fire while initDb() was still in flight.
+  useEffect(() => {
+    if (!ready || bootError) return;
+    return startSyncDaemon();
+  }, [ready, bootError]);
 
   if (!ready) return <Splash />;
+  if (bootError) return <BootError message={bootError} />;
 
   return (
     <SafeAreaProvider>

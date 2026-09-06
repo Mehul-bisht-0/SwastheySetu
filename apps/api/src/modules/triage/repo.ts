@@ -65,7 +65,7 @@ export async function insertReport(
   client?: pg.PoolClient,
 ): Promise<{ created: boolean }> {
   const run = client
-    ? (sql: string, params: unknown[]) => client.query(sql, params)
+    ? async (sql: string, params: unknown[]) => (await client.query(sql, params)).rows
     : (sql: string, params: unknown[]) => query(sql, params);
 
   const rows = await run(
@@ -76,7 +76,7 @@ export async function insertReport(
       tier, decision_source, red_flag_ids,
       classifier_score, classifier_features,
       ruleset_version, classifier_version,
-      evaluated_offline, created_at
+      evaluated_offline, created_at, client_result, server_result
     ) VALUES (
       $1,  $2,  $3,
       $4,  $5,  $6,
@@ -84,7 +84,7 @@ export async function insertReport(
       $9,  $10, $11,
       $12, $13,
       $14, $15,
-      $16, $17
+      $16, $17, $18, $19
     )
     ON CONFLICT (report_id) DO NOTHING
     RETURNING report_id`,
@@ -106,6 +106,8 @@ export async function insertReport(
       result.classifier?.version ?? null,
       input.evaluatedOffline,
       input.createdAt,
+      input.result,
+      result,
     ],
   );
 

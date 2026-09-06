@@ -1,5 +1,4 @@
-﻿import { getDb, tx } from "../client.ts";
-import { isUuidV4 } from "@swasthyasetu/core";
+import { getDb } from "../client.ts";
 import { enqueue } from "./outbox.ts";
 import type { Encounter, TriageResult } from "@swasthyasetu/core";
 
@@ -32,7 +31,6 @@ export function saveReport(input: SaveReportInput): string {
   const now = new Date().toISOString();
   const payload = {
     reportId,
-    deviceId: "local",
     villageId: input.villageId,
     encounter: {
       patient: input.encounter.patient,

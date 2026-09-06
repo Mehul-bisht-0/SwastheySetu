@@ -1,6 +1,6 @@
 ﻿import { getDb, tx } from "../client.ts";
-import { rankFacilities, assessFreshness } from "@swasthyasetu/core";
-import type { RankedFacility, CapabilityRequirement, UrgencyTier } from "@swasthyasetu/core";
+import { rankFacilities } from "@swasthyasetu/core";
+import type { RankingOutcome, CapabilityRequirement, UrgencyTier } from "@swasthyasetu/core";
 
 export interface FacilityRow {
   facilityId: string;
@@ -16,6 +16,18 @@ export interface FacilityRow {
   lastNegativeAt: string | null;
 }
 
+function writeFacilities(
+  db: ReturnType<typeof getDb>,
+  facilities: FacilityRow[],
+): void {
+  for (const f of facilities) {
+    db.runSync(
+      "INSERT OR REPLACE INTO facilities_cache (facility_id, name, type, district_code, lat, lon, capability_level, capability_tags, phone, last_confirmed_at, last_negative_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      [f.facilityId, f.name, f.type, f.districtCode, f.lat, f.lon, f.capabilityLevel, f.capabilityTags.join(","), f.phone ?? null, f.lastConfirmedAt ?? null, f.lastNegativeAt ?? null, new Date().toISOString()],
+    );
+  }
+}
+
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -26,16 +38,9 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 
 export function replaceCache(facilities: FacilityRow[], villages: unknown[], travelTimes: unknown[]): void {
   tx((db) => {
-    db.runSync("DELETE FROM facilities_cache");
-    db.runSync("DELETE FROM villages_cache");
-    db.runSync("DELETE FROM travel_times_cache");
+    // Each response is a page of a delta. Keep records from earlier pages/syncs.
 
-    for (const f of facilities) {
-      db.runSync(
-        "INSERT OR REPLACE INTO facilities_cache (facility_id, name, type, district_code, lat, lon, capability_level, capability_tags, phone, last_confirmed_at, last_negative_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [f.facilityId, f.name, f.type, f.districtCode, f.lat, f.lon, f.capabilityLevel, f.capabilityTags.join(","), f.phone ?? null, f.lastConfirmedAt ?? null, f.lastNegativeAt ?? null, new Date().toISOString()],
-      );
-    }
+    writeFacilities(db, facilities);
 
     for (const v of villages as Array<{ villageId: string; name: string; districtCode: string; latitude: number; longitude: number }>) {
       db.runSync(
@@ -52,6 +57,18 @@ export function replaceCache(facilities: FacilityRow[], villages: unknown[], tra
     }
 
     db.runSync("INSERT OR REPLACE INTO app_meta (key, value) VALUES ('sync.lastPullAt', ?)", [new Date().toISOString()]);
+  });
+}
+
+/** Replace the public Phase 7 facility snapshot without touching later sync data. */
+export function replaceFacilityCache(facilities: FacilityRow[]): void {
+  tx((db) => {
+    db.runSync("DELETE FROM facilities_cache");
+    writeFacilities(db, facilities);
+    db.runSync(
+      "INSERT OR REPLACE INTO app_meta (key, value) VALUES ('facilities.lastRefreshAt', ?)",
+      [new Date().toISOString()],
+    );
   });
 }
 
@@ -81,7 +98,7 @@ export function travelMinutes(villageId: string, facilityId: string): number | n
   return row ? Math.round(row.travel_seconds / 60) : null;
 }
 
-export function rankOffline(input: { near: { lat: number; lon: number }; radiusKm?: number; requirement: CapabilityRequirement; tier: UrgencyTier; villageId?: string }): RankedFacility[] {
+export function rankOffline(input: { near: { lat: number; lon: number }; radiusKm?: number; requirement: CapabilityRequirement; tier: UrgencyTier; villageId?: string }): RankingOutcome {
   const facs = candidates(input.near, input.radiusKm ?? 25);
   const candidates2 = facs.map((f) => {
     const tt = input.villageId
@@ -100,7 +117,7 @@ export function rankOffline(input: { near: { lat: number; lon: number }; radiusK
       latitude: f.lat, longitude: f.lon, phone: f.phone,
     };
   });
-  return rankFacilities(candidates2, input.requirement, input.tier, new Date().toISOString()).results;
+  return rankFacilities(candidates2, input.requirement, input.tier, new Date().toISOString());
 }
 
 export function lastSyncedAt(): string | null {

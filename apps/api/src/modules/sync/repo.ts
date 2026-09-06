@@ -72,7 +72,9 @@ export async function findOperation(
   clientOpId: string,
   client?: pg.PoolClient,
 ): Promise<LedgerRow | null> {
-  throw new Error("NOT_IMPLEMENTED: findOperation — see doc comment step 1");
+  const sql = "SELECT payload_hash, status, result FROM sync_operations WHERE client_op_id = $1";
+  const rows = client ? (await client.query<LedgerRow>(sql, [clientOpId])).rows : await query<LedgerRow>(sql, [clientOpId]);
+  return rows[0] ?? null;
 }
 
 export async function recordOperation(
@@ -86,5 +88,65 @@ export async function recordOperation(
   errorCode: string | null,
   client: pg.PoolClient,
 ): Promise<void> {
-  throw new Error("NOT_IMPLEMENTED: recordOperation — see doc comment step 2");
+  await client.query(
+    `INSERT INTO sync_operations (client_op_id, device_id, user_id, op_type, payload_hash, status, result, error_code)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [clientOpId, deviceId, userId, opType, payloadHash, status, result, errorCode],
+  );
+}
+
+/** Serialize even the first concurrent delivery, when there is no ledger row to lock. */
+export async function lockOperation(id: string, client: pg.PoolClient): Promise<void> {
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [id]);
+}
+
+export async function operationOwner(id: string, client: pg.PoolClient): Promise<{ user_id: string; device_id: string; op_type: string } | null> {
+  return (await client.query<{ user_id: string; device_id: string; op_type: string }>(
+    "SELECT user_id, device_id, op_type FROM sync_operations WHERE client_op_id=$1", [id],
+  )).rows[0] ?? null;
+}
+
+export async function deviceBelongsTo(deviceId: string, userId: string): Promise<boolean> {
+  // Older clients used a distinct sync device id. Bind it on first use, never steal it.
+  return (await query(
+    `INSERT INTO devices(device_id,user_id,platform,app_version)
+     SELECT $1,u.user_id,'unknown','sync-v1' FROM users u WHERE u.user_id=$2 AND u.is_active
+     ON CONFLICT(device_id) DO UPDATE SET last_seen_at=now()
+     WHERE devices.user_id=EXCLUDED.user_id RETURNING device_id`, [deviceId,userId],
+  )).length > 0;
+}
+
+export async function databaseTime(): Promise<string> {
+  const rows = await query<{ time: string }>("SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS time");
+  return rows[0]!.time;
+}
+
+export interface ReferenceRow { stamp: string; key: string; kind: "facility" | "village" | "travel"; data: unknown; }
+
+/** Villages have no update clock in the immutable v1 schema, so resend that small reference set. */
+export async function referencePage(district: string, since: string | null, until: string, stamp: string | null, key: string | null, limit: number): Promise<ReferenceRow[]> {
+  return query<ReferenceRow>(
+    `WITH reference AS (
+       SELECT f.updated_at AS ts, 'f:' || f.facility_id::text AS key, 'facility' AS kind,
+         jsonb_build_object('facilityId',f.facility_id,'name',f.name,'facilityType',f.facility_type,
+         'capabilityLevel',f.capability_level,'capabilityTags',f.capability_tags,'districtCode',f.district_code,
+         'latitude',f.latitude,'longitude',f.longitude,'phone',f.phone,'lastConfirmedAt',f.last_confirmed_at,
+         'lastNegativeAt',f.last_negative_at,'isDemoData',f.is_demo_data) AS data
+       FROM facilities f WHERE f.district_code=$1 AND ($2::timestamptz IS NULL OR f.updated_at >= $2)
+       UNION ALL
+       SELECT '1970-01-01'::timestamptz, 'v:' || v.village_id::text, 'village',
+         jsonb_build_object('villageId',v.village_id,'name',v.name,'districtCode',v.district_code,
+         'latitude',ST_Y(v.centroid::geometry),'longitude',ST_X(v.centroid::geometry),'population',v.population)
+       FROM villages v WHERE v.district_code=$1
+       UNION ALL
+       SELECT t.computed_at, 't:' || t.village_id::text || ':' || t.facility_id::text, 'travel',
+         jsonb_build_object('villageId',t.village_id,'facilityId',t.facility_id,'travelSeconds',t.travel_seconds,
+         'distanceMeters',t.distance_meters,'source',t.source)
+       FROM travel_times t JOIN villages v USING(village_id) JOIN facilities f USING(facility_id)
+       WHERE v.district_code=$1 AND f.district_code=$1 AND ($2::timestamptz IS NULL OR t.computed_at >= $2)
+     ) SELECT to_char(ts AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS stamp, key, kind, data
+       FROM reference WHERE ts <= $3::timestamptz AND ($4::timestamptz IS NULL OR (ts,key) > ($4::timestamptz,$5::text))
+       ORDER BY ts,key LIMIT $6`,
+    [district, since, until, stamp, key, limit],
+  );
 }

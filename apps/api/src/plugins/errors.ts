@@ -131,7 +131,8 @@ function isPgError(err: unknown): err is { code: string; detail?: string } {
 
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((err, req, reply) => {
-    req.log.error({ err, requestId: req.id }, "request failed");
+    // Validation errors and database details can contain health data or secrets.
+    req.log.error({ errorType: err instanceof Error ? err.name : "UnknownError", requestId: req.id }, "request failed");
 
     if (err instanceof ZodError) {
       const fields: Record<string, string> = {};
@@ -173,8 +174,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
     }
 
     // Generic fallback — never leak internals
-    const errMsg = err instanceof Error ? err.message : undefined;
-    const message = isProd ? "Something went wrong." : (errMsg ?? "Something went wrong.");
+    const message = "Something went wrong.";
     return reply.status(500).send({
       ok: false,
       error: { code: "INTERNAL", message, requestId: req.id },

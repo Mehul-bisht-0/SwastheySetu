@@ -1,8 +1,10 @@
 /**
  * FILE: apps/mobile/metro.config.js
  * PLAN: IMPLEMENTATION_PLAN.md 12.1
- * STATUS: COMPLETE - do not modify. If imports from @swasthyasetu/core fail,
- *         the fix is almost always a stale cache: `expo start -c`.
+ * STATUS: COMPLETE - do not modify. Revised 2026-09-03: schema.sql is now bundled
+ *         as a Metro asset, not parsed as source (see the tail comment). If imports
+ *         from @swasthyasetu/core fail, the fix is almost always a stale cache:
+ *         `expo start -c`.
  *
  * ---------------------------------------------------------------------------
  * WHY THIS FILE EXISTS
@@ -57,8 +59,11 @@ config.resolver.extraNodeModules = {
   "react-native": path.resolve(projectRoot, "node_modules/react-native"),
 };
 
-// db/schema.sql is imported as a string at startup (see src/db/client.ts).
-config.resolver.assetExts = config.resolver.assetExts.filter((e) => e !== "sql");
-config.resolver.sourceExts = [...config.resolver.sourceExts, "sql"];
+// db/schema.sql is bundled as a Metro asset and read at startup (see
+// src/db/client.ts, which resolves it through expo-asset). It must stay out of
+// sourceExts: Metro has no transformer for .sql, so it would hand the file to
+// Babel and the bundle would die on the first SQL comment. As an asset, Metro
+// emits a registerAsset() id that expo-asset turns into a local file.
+config.resolver.assetExts = [...config.resolver.assetExts, "sql"];
 
 module.exports = config;

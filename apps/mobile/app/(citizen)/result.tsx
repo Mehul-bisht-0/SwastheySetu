@@ -7,19 +7,30 @@ import { Card } from "../../src/ui/Card.tsx";
 import { TierBanner } from "../../src/ui/TierBanner.tsx";
 import { getReport } from "../../src/db/dao/reports.ts";
 import { RULES } from "@swasthyasetu/core";
-import { t } from "../../src/i18n/strings.ts";
+import { getLocale, t } from "../../src/i18n/strings.ts";
+import { useVoicePrompt } from "../../src/ivr/useVoicePrompt.ts";
 import { ink, type, space, system } from "../../src/theme/tokens.ts";
 import type { TierKey } from "../../src/theme/tokens.ts";
 import type { ReportRow } from "../../src/db/dao/reports.ts";
 
 export default function ResultScreen(): React.ReactNode {
   const router = useRouter();
-  const { reportId } = useLocalSearchParams<{ reportId: string }>();
+  const { reportId, voice } = useLocalSearchParams<{ reportId: string; voice?: string }>();
   const [report, setReport] = useState<ReportRow | null>(null);
 
   useEffect(() => {
     if (reportId) setReport(getReport(reportId));
   }, [reportId]);
+
+  const spokenTier = report?.tier as TierKey | undefined;
+  const spokenResult = spokenTier
+    ? `${t(`triage.${spokenTier}.headline`)} ${t(`triage.${spokenTier}.support`)} ${t("triage.disclaimer")}`
+    : "";
+  const { repeat, speechFailed } = useVoicePrompt(
+    spokenResult,
+    getLocale(),
+    voice === "1" && report !== null,
+  );
 
   if (!report) return <Screen><Text style={{ color: ink.muted, textAlign: "center" }}>Loading...</Text></Screen>;
 
@@ -36,7 +47,7 @@ export default function ResultScreen(): React.ReactNode {
     <ScrollView>
       <TierBanner tier={tierKey} />
       <View style={styles.body}>
-        {result.redFlagHits.length > 0 && (
+        {result.advice.length > 0 && (
           <Card heading={t("triage.whyThis")}>
             {result.advice.map((r, i) => (
               <Text key={i} style={styles.reason}>{"\u2022 " + r}</Text>
@@ -51,8 +62,13 @@ export default function ResultScreen(): React.ReactNode {
             ))}
           </Card>
         )}
+        <Text style={styles.offlineNote}>{t("triage.offlineNote")}</Text>
         <Text style={styles.disclaimer}>{t("triage.disclaimer")}</Text>
+        {voice === "1" && speechFailed ? (
+          <Text style={styles.voiceNotice}>{t("ivr.voice.failed")}</Text>
+        ) : null}
         <View style={styles.buttons}>
+          {voice === "1" ? <Button label={t("ivr.result.repeat")} variant="secondary" onPress={repeat} /> : null}
           {showFacilities && <Button label={t("triage.findCare")} onPress={() => router.push({ pathname: "/(citizen)/facilities", params: { reportId } })} />}
           <Button label={t("action.startOver")} variant="secondary" onPress={() => router.replace("/")} />
         </View>
@@ -66,6 +82,8 @@ const styles = StyleSheet.create({
   reason: { ...(type.body as object), color: ink.body, marginBottom: space.xs },
   watchHelp: { ...(type.body as object), color: ink.body, marginBottom: space.sm },
   dangerSign: { ...(type.body as object), fontWeight: "600", marginBottom: space.xs },
+  offlineNote: { ...(type.meta as object), color: ink.body, textAlign: "center", marginTop: space.md },
   disclaimer: { ...(type.meta as object), color: ink.muted, textAlign: "center", marginVertical: space.md },
+  voiceNotice: { ...(type.body as object), color: ink.body, textAlign: "center", marginBottom: space.md },
   buttons: { marginTop: space.lg, gap: space.sm },
 });

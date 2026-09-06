@@ -70,6 +70,8 @@ export interface CandidateRow {
   facility_type: string;
   capability_level: number;
   capability_tags: string[];
+  district_code: string;
+  is_demo_data: boolean;
   travel_seconds: number;
   distance_meters: number;
   source: "OSRM" | "ESTIMATED";
@@ -86,6 +88,7 @@ export async function candidatesForVillage(
 ): Promise<CandidateRow[]> {
   return query<CandidateRow>(
     `SELECT f.facility_id, f.name, f.facility_type, f.capability_level, f.capability_tags,
+            f.district_code, f.is_demo_data,
             t.travel_seconds, t.distance_meters, t.source,
             f.last_confirmed_at, f.last_negative_at,
             f.latitude, f.longitude, f.phone

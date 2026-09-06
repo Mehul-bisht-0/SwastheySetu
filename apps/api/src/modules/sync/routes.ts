@@ -49,9 +49,14 @@
 import type { FastifyInstance } from "fastify";
 import { sync as syncContracts } from "@swasthyasetu/contracts";
 
-import { pull, push } from "./service.ts";
+import { pull, pushBatch } from "./service.ts";
 import { requireAuth } from "../../plugins/auth.ts";
 
-export async function syncRoutes(_app: FastifyInstance): Promise<void> {
-  // Phase 9 — routes registered in a later phase
+export async function syncRoutes(app: FastifyInstance): Promise<void> {
+  app.post("/push", { onRequest: [requireAuth], config: { rateLimit: { max: 600, timeWindow: "1 minute" } } }, async (req) => ({
+    ok: true, data: await pushBatch(req.body, req.user.sub, req.user.did),
+  }));
+  app.get("/pull", { onRequest: [requireAuth] }, async (req) => ({
+    ok: true, data: await pull(syncContracts.pullQuery.parse(req.query), req.user.district),
+  }));
 }

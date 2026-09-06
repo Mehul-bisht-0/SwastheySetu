@@ -1,9 +1,9 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { paper, ink, type, space, touch, radius, accent } from "../theme/tokens.ts";
 
 export function Field(props: {
-  label: string; value: string; onChange: (v: string) => void;
+  label?: string; value: string; onChange: (v: string) => void;
   help?: string; error?: string;
   keyboardType?: "default" | "number-pad" | "phone-pad";
   secure?: boolean;
@@ -13,7 +13,7 @@ export function Field(props: {
   const borderWidth = focused || props.error ? 2 : 1;
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>{props.label}</Text>
+      {props.label ? <Text style={styles.label}>{props.label}</Text> : null}
       {props.help ? <Text style={styles.help}>{props.help}</Text> : null}
       <TextInput
         value={props.value}

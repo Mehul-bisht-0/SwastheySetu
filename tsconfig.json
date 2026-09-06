@@ -1,8 +1,16 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/contracts" },
-    { "path": "./apps/api" }
-  ]
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/contracts"
+    },
+    {
+      "path": "./apps/api"
+    }
+  ],
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

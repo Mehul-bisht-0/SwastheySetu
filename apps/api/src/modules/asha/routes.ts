@@ -47,6 +47,23 @@ import { asha as ashaContracts } from "@swasthyasetu/contracts";
 import { myVillages, saveVisit, visits } from "./service.ts";
 import { requireAuth, requireRole } from "../../plugins/auth.ts";
 
-export async function ashaRoutes(_app: FastifyInstance): Promise<void> {
-  // Phase 8 — routes registered in a later phase
+export async function ashaRoutes(app: FastifyInstance): Promise<void> {
+  const guards = { onRequest: [requireAuth, requireRole("ASHA", "SUPERVISOR", "ADMIN")] };
+
+  app.get("/villages", guards, async (req) => ({
+    ok: true,
+    data: await myVillages(req.user.district),
+  }));
+
+  app.post("/visits", guards, async (req, reply) => {
+    const input = ashaContracts.upsertVisitRequest.parse(req.body);
+    const data = await saveVisit(input, req.user.sub);
+    reply.code(data.created ? 201 : 200);
+    return { ok: true, data };
+  });
+
+  app.get("/visits", guards, async (req) => {
+    const query = ashaContracts.listVisitsQuery.parse(req.query);
+    return { ok: true, data: await visits(req.user.sub, query) };
+  });
 }

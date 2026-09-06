@@ -8,13 +8,13 @@ import url from "node:url";
 export const RURAL_SPEED_KMPH = 25;
 export const DETOUR_FACTOR = 1.4;
 
-function requireEnv(key) {
+function requireEnv(key: string): string {
   const v = process.env[key];
   if (!v) throw new Error("Missing: " + key);
   return v;
 }
 
-export async function fillEstimatedGaps(client, districtCode) {
+export async function fillEstimatedGaps(client: pg.PoolClient, districtCode: string): Promise<number> {
   const res = await client.query(`
     WITH pairs AS (
       SELECT v.village_id, f.facility_id,
@@ -41,7 +41,7 @@ export async function fillEstimatedGaps(client, districtCode) {
 
 export async function precomputeTravelTimes() {
   const databaseUrl = requireEnv("DATABASE_URL");
-  const districtCode = process.env["DEMO_DISTRICT_CODE"] ?? "NALANDA-227";
+  const districtCode = process.env["DEMO_DISTRICT_CODE"] ?? "227";
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 3 });
   const client = await pool.connect();
   const t0 = Date.now();
@@ -53,6 +53,7 @@ export async function precomputeTravelTimes() {
       "SELECT facility_id FROM facilities WHERE district_code = $1",
       [districtCode]);
     const totalPairs = vilRes.rows.length * facRes.rows.length;
+    if (totalPairs === 0) throw new Error("No village/facility pairs in the selected district. Seed that district first.");
     console.log("Pairs to fill: " + totalPairs);
     const estimated = await fillEstimatedGaps(client, districtCode);
     const ms = Date.now() - t0;

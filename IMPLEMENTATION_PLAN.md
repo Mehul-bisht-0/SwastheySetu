@@ -33,7 +33,8 @@ support honestly.
 | Deterministic triage engine, runs on phone and server from one source | RAG / knowledge retrieval (§13) |
 | Facility ranking with capability filtering and evidence-age weighting | Live facility status feeds |
 | Offline SQLite store with a durable outbox and idempotent sync | Multi-district scale, national datasets |
-| ASHA worker auth and household visit capture | SMS/IVR fallback, voice input |
+| ASHA worker auth and household visit capture | SMS/phone-line IVR fallback, speech input |
+| In-app spoken prompts with numbered keypad answers | Telecom-provider integration |
 | Postgres + PostGIS backend, precomputed travel times | Real-time routing at request time |
 
 ### 1.2 The ten guardrails
@@ -575,8 +576,12 @@ resolution; `extraNodeModules` pins single copies of `react`, `react-native` and
 
 Metro reads the raw `.ts` sources of `packages/core` — it resolves an exact path before applying
 `sourceExts` substitution — so Babel strips the types on the way through and there is exactly one
-copy of the clinical rules in the system. `sql` is moved from `assetExts` to `sourceExts` so
-`schema.sql` can be imported as a string.
+copy of the clinical rules in the system.
+
+`schema.sql` must stay in `assetExts` (never move it to `sourceExts`): Metro has no `.sql`
+transformer, so a source-ext `.sql` is handed to Babel and the bundle dies on the first SQL
+comment. Bundled as an asset instead, `schema.sql` is resolved at startup through `expo-asset`
+and read as text — see `src/db/client.ts`.
 
 When an import from `@swasthyasetu/core` fails to resolve, it is almost always a stale cache:
 `npm --prefix apps/mobile run start -- -c`.
@@ -694,6 +699,17 @@ boundary — 13.9 days shows "13 days", not "2 weeks".
 Any list showing these chips also shows `freshness.callFirst` once at the top. The honest
 instruction after "we last heard on Tuesday" is "ring them before you set out", and it costs one
 line.
+
+### 12.12 In-app IVR voice guide
+
+The citizen and ASHA entry screens offer a voice-guided triage mode. It reads the bilingual,
+on-screen questions through the device text-to-speech service and accepts large numbered keypad
+answers. Every prompt remains visible if a device voice is missing or muted.
+
+The voice layer is presentation only. It does not use a microphone, transcribe speech, diagnose,
+or determine urgency. It builds the same `Encounter` as the tap flow, calls the same on-device
+`evaluateTriage`, saves through the same SQLite outbox, and reads the standard result copy aloud.
+Phone-line IVR still requires a telecom provider and remains deferred.
 
 ---
 

@@ -67,7 +67,8 @@ import type { FreshnessAssessment } from "@swasthyasetu/core";
 import { assessFreshness } from "@swasthyasetu/core";
 
 import { byId, freshnessFor, insertSignal, nearby } from "./repo.ts";
-import { badRequest, notFound } from "../../plugins/errors.ts";
+import { badRequest, notFound, forbidden } from "../../plugins/errors.ts";
+import { findById } from "../auth/repo.ts";
 
 type NearbyQuery = ReturnType<typeof facilityContracts.nearbyQuery.parse>;
 type NearbyResponse = ReturnType<typeof facilityContracts.nearbyResponse.parse>;
@@ -121,8 +122,17 @@ export async function submitSignal(
   input: CreateSignalRequest,
   userId: string,
 ): Promise<CreateSignalResponse> {
+  await validateSignal(input, userId);
+  const { created } = await insertSignal(input, userId);
+  const fresh = await freshnessFor(input.facilityId);
+  return { activityId: input.activityId, created, freshness: toFreshness(fresh) };
+}
+
+export async function validateSignal(input: CreateSignalRequest, userId: string): Promise<void> {
   const facility = await byId(input.facilityId);
   if (!facility) throw notFound("Facility not found.");
+  const user = await findById(userId);
+  if (!user?.is_active || user.district_code !== facility.district_code) throw forbidden();
 
   // Reject a future observedAt more than 1 day ahead
   const observedMs = Date.parse(input.observedAt);
@@ -130,12 +140,4 @@ export async function submitSignal(
     throw badRequest("observedAt is too far in the future.");
   }
 
-  const { created } = await insertSignal(input, userId);
-  const fresh = await freshnessFor(input.facilityId);
-
-  return {
-    activityId: input.activityId,
-    created,
-    freshness: toFreshness(fresh),
-  };
 }

@@ -99,15 +99,15 @@ export async function nearby(
   radiusMeters: number,
   limit: number,
 ): Promise<FacilityRow[]> {
-  const point = `ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography`;
+
   return query<FacilityRow>(
     `SELECT f.facility_id, f.name, f.facility_type, f.capability_level, f.capability_tags,
             f.district_code, f.latitude, f.longitude, f.phone,
             f.last_confirmed_at, f.last_negative_at, f.is_demo_data, f.updated_at,
-            ST_Distance(f.geom, ${point})::int AS distance_meters
+            ST_Distance(f.geom, ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography)::int AS distance_meters
        FROM facilities f
-      WHERE ST_DWithin(f.geom, ${point}, $3)
-      ORDER BY f.geom <-> ${point}
+      WHERE ST_DWithin(f.geom, ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography, $3)
+      ORDER BY f.geom <-> ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography
       LIMIT $4`,
     [lat, lon, radiusMeters, limit],
   );
@@ -130,13 +130,13 @@ export async function insertSignal(
   client?: pg.PoolClient,
 ): Promise<{ created: boolean }> {
   const run = client
-    ? (sql: string, params: unknown[]) => client.query(sql, params)
+    ? async (sql: string, params: unknown[]) => (await client.query(sql, params)).rows
     : (sql: string, params: unknown[]) => query(sql, params);
 
   const rows = await run(
     `INSERT INTO facility_activity
        (activity_id, facility_id, signal_type, observed_at, submitted_by, device_id, note)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
      ON CONFLICT (activity_id) DO NOTHING
      RETURNING activity_id`,
     [

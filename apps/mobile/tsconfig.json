@@ -8,11 +8,26 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./src/*"],
-      "@swasthyasetu/core": ["../../packages/core/src/index.ts"],
-      "@swasthyasetu/contracts": ["../../packages/contracts/src/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@swasthyasetu/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@swasthyasetu/contracts": [
+        "../../packages/contracts/src/index.ts"
+      ]
     }
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

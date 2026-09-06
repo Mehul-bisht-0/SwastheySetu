@@ -107,7 +107,7 @@ export function registerObservability(app: FastifyInstance): void {
   // Log completed requests; warn on slow ones
   app.addHook("onResponse", (req, reply, done) => {
     const ms = Math.round(reply.elapsedTime);
-    const logData = { method: req.method, url: req.url, status: reply.statusCode, ms };
+    const logData = { method: req.method, route: req.routeOptions.url, status: reply.statusCode, ms };
     if (ms > 500) {
       req.log.warn(logData, "slow request");
     } else {

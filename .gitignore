@@ -6,4 +6,6 @@ dist/
 .expo/
 .DS_Store
 coverage/
+.stabilization-export/
+.phase1-export/
 *.log

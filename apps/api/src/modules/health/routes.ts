@@ -53,7 +53,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         status: dbUp ? "ok" : "degraded",
         version: APP_VERSION,
         database: dbUp ? "up" : "down",
-        ragEnabled: config.RAG_ENABLED,
+        ragEnabled: false,
         time: new Date().toISOString(),
       },
     };

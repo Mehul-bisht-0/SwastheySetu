@@ -6,11 +6,12 @@
   "main": "./src/server.ts",
   "comment": "Fastify + node-postgres, no ORM. Raw parameterised SQL lives in repo.ts files. Run directly with node - Node 22 strips the types, so there is no build step and relative imports must end in .ts (AGENTS.md section 3).",
   "scripts": {
-    "dev": "node --disable-warning=ExperimentalWarning --watch src/server.ts",
-    "start": "node --disable-warning=ExperimentalWarning src/server.ts",
-    "migrate": "node --disable-warning=ExperimentalWarning src/db/migrate.ts",
-    "seed": "node --disable-warning=ExperimentalWarning ../../infra/seed/load.ts",
-    "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.ts\"",
+    "dev": "node --disable-warning=ExperimentalWarning --env-file=../../.env --watch src/server.ts",
+    "start": "node --disable-warning=ExperimentalWarning --env-file=../../.env src/server.ts",
+    "migrate": "node --disable-warning=ExperimentalWarning --env-file=../../.env src/db/migrate.ts",
+    "seed": "node --disable-warning=ExperimentalWarning --env-file=../../.env ../../infra/seed/load.ts",
+    "routing:precompute": "node --disable-warning=ExperimentalWarning --env-file=../../.env ../../infra/routing/precompute.ts",
+    "test": "node --disable-warning=ExperimentalWarning --env-file=../../.env --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "typecheck": "tsc -b"
   },
   "dependencies": {

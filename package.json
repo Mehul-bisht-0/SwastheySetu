@@ -1,25 +1,38 @@
-﻿{
+{
   "name": "swasthyasetu",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/api"
   ],
   "scripts": {
     "db:up": "docker compose -f infra/docker-compose.yml up -d db",
     "db:migrate": "npm -w @swasthyasetu/api run migrate",
     "db:seed": "npm -w @swasthyasetu/api run seed",
     "dev:api": "npm -w @swasthyasetu/api run dev",
-    "dev:mobile": "npm -w @swasthyasetu/mobile run start",
+    "dev:mobile": "npm --prefix apps/mobile run start",
     "test:core": "node --test packages/core/src/**/*.test.ts",
+    "test:scenarios": "node --test tests/scenarios.test.ts",
+    "test:mobile-storage": "node --test tests/mobile-outbox.test.mjs",
+    "typecheck:mobile": "npm --prefix apps/mobile run typecheck",
     "test:api": "npm -w @swasthyasetu/api run test",
+    "test:db:prepare": "node --env-file=.env scripts/prepare-test-db.mjs",
     "typecheck": "tsc -b",
-    "verify": "npm run typecheck && npm run test:core && npm run test:api && node scripts/check-no-secrets.mjs",
+    "verify": "npm run typecheck && npm run typecheck:mobile && npm run test:core && npm run test:scenarios && npm run test:mobile-storage && npm run test:api && node scripts/check-no-secrets.mjs",
+    "routing:up": "docker compose -f infra/docker-compose.yml --profile routing up -d osrm",
     "routing:precompute": "npm -w @swasthyasetu/api run routing:precompute"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "~19.2.4",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=10.9.0"
+  },
+  "dependencies": {
+    "expo": "^57.0.20"
   }
 }

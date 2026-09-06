@@ -54,19 +54,52 @@ type ListVisitsResponse = ReturnType<typeof ashaContracts.listVisitsResponse.par
 type VillagesResponse = ReturnType<typeof ashaContracts.villagesResponse.parse>;
 
 export async function myVillages(districtCode: string): Promise<VillagesResponse> {
-  throw new Error("NOT_IMPLEMENTED: myVillages — see doc comment");
+  const rows = await villagesForDistrict(districtCode);
+  return {
+    items: rows.map((row) => ({
+      villageId: row.village_id,
+      name: row.name,
+      districtCode: row.district_code,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      population: row.population,
+    })),
+  };
 }
 
 export async function saveVisit(
   input: UpsertVisitRequest,
   ashaId: string,
 ): Promise<UpsertVisitResponse> {
-  throw new Error("NOT_IMPLEMENTED: saveVisit — see doc comment");
+  const row = await upsertVisit(input, ashaId);
+  if (row === null) {
+    throw versionConflict("This visit was updated more recently on another device.");
+  }
+  return {
+    visitId: input.visitId,
+    entityVersion: row.entityVersion,
+    created: row.created,
+  };
 }
 
 export async function visits(
   ashaId: string,
   q: ListVisitsQuery,
 ): Promise<ListVisitsResponse> {
-  throw new Error("NOT_IMPLEMENTED: visits — see doc comment");
+  const rows = await listVisits(ashaId, q);
+  return {
+    items: rows.map((row) => ({
+      visitId: row.visit_id,
+      villageId: row.village_id,
+      householdCode: row.household_code,
+      visitedAt: row.visited_at.toISOString(),
+      membersSeen: row.members_seen,
+      dangerSigns: row.danger_signs,
+      referralMade: row.referral_made,
+      findings: row.findings,
+      notes: row.notes ?? undefined,
+      entityVersion: row.entity_version,
+      createdAt: row.created_at.toISOString(),
+    })),
+  };
 }

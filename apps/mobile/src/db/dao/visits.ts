@@ -1,11 +1,17 @@
 ﻿import { getDb, tx } from "../client.ts";
 import { enqueue } from "./outbox.ts";
+import type { SymptomCode } from "@swasthyasetu/core";
+import { asha as ashaContracts } from "@swasthyasetu/contracts";
 
 export interface UpsertVisitInput {
   householdCode: string;
   villageId: string;
   visitedAt: string;
-  payload: Record<string, unknown>;
+  membersSeen: number;
+  dangerSigns: SymptomCode[];
+  referralMade: boolean;
+  findings: Record<string, string | number | boolean>;
+  notes?: string;
 }
 
 export interface VisitRow {
@@ -28,18 +34,38 @@ function uuid(): string {
 
 export function upsertVisit(input: UpsertVisitInput): string {
   const existing = getDb().getFirstSync(
-    "SELECT visit_id, entity_version FROM household_visits_local WHERE village_id=? AND household_code=?",
+    "SELECT visit_id, entity_version, payload_json FROM household_visits_local WHERE village_id=? AND household_code=?",
     [input.villageId, input.householdCode],
-  ) as { visit_id: string; entity_version: number } | null;
+  ) as { visit_id: string; entity_version: number; payload_json: string } | null;
 
   const visitId = existing?.visit_id ?? uuid();
   const entityVersion = (existing?.entity_version ?? 0) + 1;
   const now = new Date().toISOString();
   const clientOpId = uuid();
-  const payload = { visitId, householdCode: input.householdCode, villageId: input.villageId, visitedAt: input.visitedAt, entityVersion, ...input.payload };
+  let createdAt = now;
+  if (existing) {
+    try {
+      const prior = JSON.parse(existing.payload_json) as Record<string, unknown>;
+      if (typeof prior["createdAt"] === "string") createdAt = prior["createdAt"];
+    } catch { /* keep a valid timestamp when upgrading a legacy local row */ }
+  }
+  const payload = {
+    visitId,
+    householdCode: input.householdCode,
+    villageId: input.villageId,
+    visitedAt: input.visitedAt,
+    membersSeen: input.membersSeen,
+    dangerSigns: input.dangerSigns,
+    referralMade: input.referralMade,
+    findings: input.findings,
+    ...(input.notes ? { notes: input.notes } : {}),
+    entityVersion,
+    createdAt,
+  };
+  const validatedPayload = ashaContracts.upsertVisitRequest.parse(payload);
 
   enqueue(
-    { clientOpId, opType: "HOUSEHOLD_VISIT_UPSERT", payload, clientCreatedAt: now },
+    { clientOpId, opType: "HOUSEHOLD_VISIT_UPSERT", payload: validatedPayload, clientCreatedAt: now },
     (db) => {
       db.runSync(
         `INSERT INTO household_visits_local (visit_id, household_code, village_id, visited_at, entity_version, payload_json, pending, conflict)
@@ -47,7 +73,7 @@ export function upsertVisit(input: UpsertVisitInput): string {
          ON CONFLICT(village_id, household_code) DO UPDATE SET
            visited_at=excluded.visited_at, entity_version=excluded.entity_version,
            payload_json=excluded.payload_json, pending=1, conflict=0`,
-        [visitId, input.householdCode, input.villageId, input.visitedAt, entityVersion, JSON.stringify(payload)],
+        [visitId, input.householdCode, input.villageId, input.visitedAt, entityVersion, JSON.stringify(validatedPayload)],
       );
     },
   );

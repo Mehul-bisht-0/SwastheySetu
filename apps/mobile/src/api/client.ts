@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-const BASE = (process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000");
+const BASE = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000");
 export const TOKEN_KEY = "auth_token";
 
 export interface Envelope<T> {
@@ -16,21 +16,28 @@ export async function request<T>(
   const method = opts?.method ?? "GET";
   const timeoutMs = opts?.timeoutMs ?? 20000;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (opts?.auth !== false) {
-    const token = await SecureStore.getItemAsync(TOKEN_KEY);
-    if (token) headers["Authorization"] = "Bearer " + token;
-  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (opts?.auth !== false) {
+      // Inside the try: SecureStore throws on an unavailable keychain, and the
+      // timer used to be created before this point, so it leaked on that path.
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      if (token) headers["Authorization"] = "Bearer " + token;
+    }
+    timer = setTimeout(() => ctrl.abort(), timeoutMs);
     const res = await fetch(BASE + path, {
       method, headers,
       body: opts?.body != null ? JSON.stringify(opts.body) : undefined,
       signal: ctrl.signal,
     });
     return (await res.json()) as Envelope<T>;
+  } catch (e) {
+    // Callers are typed against Envelope and check `res.ok`; rejecting instead
+    // would break that contract and surface a raw JS error string in the UI.
+    return { ok: false, error: { code: "NETWORK", message: String(e) } };
   } finally {
-    clearTimeout(timer);
+    if (timer !== undefined) clearTimeout(timer);
   }
 }
 

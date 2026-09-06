@@ -80,7 +80,7 @@ function parseCsv(text: string): Array<Record<string, string>> {
 
 export async function loadSeed(): Promise<void> {
   const databaseUrl = requireEnv("DATABASE_URL");
-  const districtCode = process.env["DEMO_DISTRICT_CODE"] ?? "NALANDA-227";
+  const districtCode = process.env["DEMO_DISTRICT_CODE"] ?? "227";
 
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 3 });
   const client = await pool.connect();

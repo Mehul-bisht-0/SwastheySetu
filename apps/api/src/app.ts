@@ -70,11 +70,13 @@ import { facilitiesRoutes } from "./modules/facilities/routes.ts";
 import { ashaRoutes } from "./modules/asha/routes.ts";
 import { syncRoutes } from "./modules/sync/routes.ts";
 import { ragRoutes } from "./modules/rag/routes.ts";
+import { assignmentRoutes } from "./modules/assignments/routes.ts";
+import { ivrRoutes } from "./modules/ivr/routes.ts";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: loggerOptions(),
-    trustProxy: true,
+    trustProxy: false,
     disableRequestLogging: true, // we log in onResponse hook instead
   });
 
@@ -103,6 +105,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(ashaRoutes,       { prefix: "/asha" });
   await app.register(syncRoutes,       { prefix: "/sync" });
   await app.register(ragRoutes,        { prefix: "/rag" });
+  await app.register(assignmentRoutes, { prefix: "/assignments" });
+  await app.register(ivrRoutes,        { prefix: "/ivr" });
 
   return app;
 }

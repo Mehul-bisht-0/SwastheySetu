@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, FlatList, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../../src/ui/Screen.tsx";
@@ -28,6 +28,12 @@ const SYMPTOM_LABELS: Record<SymptomCode, string> = {
   RASH: "Rash or spots", INJURY: "Injury", BURNING_URINATION: "Burning urination",
 };
 
+// Ensure even grid layout by adding a spacer slot if the symptom count is odd
+const GRID_DATA: (SymptomCode | null)[] =
+  SYMPTOM_ORDER.length % 2 === 0
+    ? SYMPTOM_ORDER
+    : [...SYMPTOM_ORDER, null];
+
 export default function SymptomsScreen(): React.ReactNode {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<SymptomCode>>(() => new Set(getDraft().symptoms));
@@ -44,22 +50,62 @@ export default function SymptomsScreen(): React.ReactNode {
   const canContinue = selected.size > 0;
 
   return (
-    <Screen title={t("symptoms.title")} scroll={false}
-      footer={<Button label={t("symptoms.continue")} onPress={() => router.push("/(citizen)/questions")} disabled={!canContinue} />}>
-      {!canContinue && <Text style={styles.hint}>{t("symptoms.none")}</Text>}
+    <Screen
+      title={t("symptoms.title")}
+      scroll={false}
+      footer={
+        <Button
+          label={t("symptoms.continue")}
+          onPress={() => router.push("/(citizen)/questions")}
+          disabled={!canContinue}
+        />
+      }
+    >
+      <Text style={styles.hint}>
+        {canContinue ? t("symptoms.help") : t("symptoms.none")}
+      </Text>
       <FlatList
-        data={SYMPTOM_ORDER}
-        keyExtractor={(c) => c}
+        data={GRID_DATA}
+        keyExtractor={(c, idx) => c ?? `placeholder-${idx}`}
         numColumns={2}
-        contentContainerStyle={{ padding: space.sm }}
-        renderItem={({ item }) => (
-          <SymptomTile code={item} label={SYMPTOM_LABELS[item] ?? item} selected={selected.has(item)} onToggle={() => toggle(item)} />
-        )}
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => {
+          if (!item) {
+            return <View style={styles.tilePlaceholder} />;
+          }
+          return (
+            <SymptomTile
+              code={item}
+              label={SYMPTOM_LABELS[item] ?? item}
+              selected={selected.has(item)}
+              onToggle={() => toggle(item)}
+            />
+          );
+        }}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hint: { ...(type.body as object), color: ink.muted, textAlign: "center", padding: space.md },
+  hint: {
+    ...(type.body as object),
+    color: ink.muted,
+    textAlign: "center",
+    marginBottom: space.sm,
+  },
+  listContent: {
+    paddingBottom: space.lg,
+  },
+  columnWrapper: {
+    gap: space.sm,
+    marginBottom: space.sm,
+  },
+  tilePlaceholder: {
+    flex: 1,
+    minHeight: 100,
+    backgroundColor: "transparent",
+  },
 });

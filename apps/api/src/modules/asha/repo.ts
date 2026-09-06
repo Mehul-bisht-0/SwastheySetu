@@ -76,6 +76,7 @@ import { query } from "../../db/pool.ts";
 
 type UpsertVisitRequest = ReturnType<typeof ashaContracts.upsertVisitRequest.parse>;
 type ListVisitsQuery = ReturnType<typeof ashaContracts.listVisitsQuery.parse>;
+type HouseholdVisit = ReturnType<typeof ashaContracts.householdVisit.parse>;
 
 export interface VillageRow {
   village_id: string;
@@ -92,16 +93,25 @@ export interface VisitRow {
   household_code: string;
   visited_at: Date;
   members_seen: number;
-  danger_signs: string[];
+  danger_signs: HouseholdVisit["dangerSigns"];
   referral_made: boolean;
-  findings: Record<string, unknown>;
+  findings: HouseholdVisit["findings"];
   notes: string | null;
   entity_version: number;
   created_at: Date;
 }
 
 export async function villagesForDistrict(districtCode: string): Promise<VillageRow[]> {
-  throw new Error("NOT_IMPLEMENTED: villagesForDistrict — see doc comment step 1");
+  return query<VillageRow>(
+    `SELECT village_id, name, district_code,
+            ST_Y(centroid::geometry) AS latitude,
+            ST_X(centroid::geometry) AS longitude,
+            population
+       FROM villages
+      WHERE district_code = $1
+      ORDER BY name`,
+    [districtCode],
+  );
 }
 
 export async function upsertVisit(
@@ -109,12 +119,61 @@ export async function upsertVisit(
   ashaId: string,
   client?: pg.PoolClient,
 ): Promise<{ created: boolean; entityVersion: number } | null> {
-  throw new Error("NOT_IMPLEMENTED: upsertVisit — see doc comment step 2");
+  const sql = `INSERT INTO household_visits (
+      visit_id, asha_id, village_id, household_code, visited_at,
+      members_seen, danger_signs, referral_made, findings, notes,
+      entity_version, device_id, created_at
+    ) SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+      FROM users u JOIN villages v ON v.village_id=$3
+      WHERE u.user_id=$2 AND u.is_active AND u.district_code=v.district_code
+    ON CONFLICT (visit_id) DO UPDATE SET
+      household_code = EXCLUDED.household_code,
+      visited_at = EXCLUDED.visited_at,
+      members_seen = EXCLUDED.members_seen,
+      danger_signs = EXCLUDED.danger_signs,
+      referral_made = EXCLUDED.referral_made,
+      findings = EXCLUDED.findings,
+      notes = EXCLUDED.notes,
+      entity_version = EXCLUDED.entity_version
+    WHERE household_visits.entity_version < EXCLUDED.entity_version
+      AND household_visits.asha_id = EXCLUDED.asha_id
+      AND household_visits.village_id = EXCLUDED.village_id
+    RETURNING (xmax = 0) AS created, entity_version`;
+  const params = [
+    input.visitId,
+    ashaId,
+    input.villageId,
+    input.householdCode,
+    input.visitedAt,
+    input.membersSeen,
+    input.dangerSigns,
+    input.referralMade,
+    input.findings,
+    input.notes ?? null,
+    input.entityVersion,
+    input.deviceId ?? null,
+    input.createdAt,
+  ];
+  const rows = client
+    ? (await client.query<{ created: boolean; entity_version: number }>(sql, params)).rows
+    : await query<{ created: boolean; entity_version: number }>(sql, params);
+  const row = rows[0];
+  return row ? { created: row.created, entityVersion: row.entity_version } : null;
 }
 
 export async function listVisits(
   ashaId: string,
   q: ListVisitsQuery,
 ): Promise<VisitRow[]> {
-  throw new Error("NOT_IMPLEMENTED: listVisits — see doc comment step 3");
+  return query<VisitRow>(
+    `SELECT visit_id, village_id, household_code, visited_at, members_seen,
+            danger_signs, referral_made, findings, notes, entity_version, created_at
+       FROM household_visits
+      WHERE asha_id = $1
+        AND ($2::uuid IS NULL OR village_id = $2)
+        AND ($3::timestamptz IS NULL OR visited_at >= $3)
+      ORDER BY visited_at DESC
+      LIMIT $4`,
+    [ashaId, q.villageId ?? null, q.since ?? null, q.limit],
+  );
 }

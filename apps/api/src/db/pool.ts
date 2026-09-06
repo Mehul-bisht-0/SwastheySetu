@@ -60,6 +60,7 @@ export const pool = new pg.Pool({
   max: config.PGPOOL_MAX,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
+  allowExitOnIdle: config.NODE_ENV === "test",
 });
 
 export async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {

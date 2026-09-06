@@ -1,6 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { getDb } from "../db/client.ts";
 import { api, TOKEN_KEY, request } from "../api/client.ts";
+import { refreshAshaVillages } from "../api/asha.ts";
+import { getDeviceId } from "./device.ts";
 
 export interface Session { ashaId: string; name: string; districtCode: string; }
 
@@ -27,16 +29,21 @@ export async function signIn(phone: string, password: string): Promise<{ ok: boo
   try {
     const res = await request<{ accessToken: string; user: { userId: string; fullName: string; districtCode: string } }>(
       "/auth/login",
-      { method: "POST", body: { phone, password, deviceId: "mobile-device", platform: "android", appVersion: "0.1.0" }, auth: false },
+      { method: "POST", body: { phone, password, deviceId: getDeviceId(), platform: "android", appVersion: "0.1.0" }, auth: false },
     );
     if (!res.ok || !res.data) return { ok: false, error: res.error?.message };
-    await SecureStore.setItemAsync(TOKEN_KEY, res.data.accessToken);
     const db = getDb();
+    const owner = db.getFirstSync<{ value: string }>("SELECT value FROM app_meta WHERE key='session.ashaId'")?.value;
+    if (owner && owner !== res.data.user.userId) {
+      return { ok: false, error: "This phone contains another worker's records. Use a separate app installation." };
+    }
+    await SecureStore.setItemAsync(TOKEN_KEY, res.data.accessToken);
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.ashaId',?)", [res.data.user.userId]);
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.name',?)", [res.data.user.fullName]);
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.district',?)", [res.data.user.districtCode]);
     session = { ashaId: res.data.user.userId, name: res.data.user.fullName, districtCode: res.data.user.districtCode };
     notify();
+    try { await refreshAshaVillages(); } catch { /* The authenticated session remains usable offline. */ }
     return { ok: true };
   } catch (e) { return { ok: false, error: String(e) }; }
 }

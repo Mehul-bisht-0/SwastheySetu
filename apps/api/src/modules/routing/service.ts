@@ -38,13 +38,10 @@
  *           const result = input.result ?? evaluate(input.encounter!)
  *
  *      b. const requirement = requiredCapability(encounter, result)
- *         When only `result` was supplied there is no encounter to pass. Either
- *         require the caller to send `encounter` whenever they want capability
- *         filtering, or reconstruct a minimal PatientContext from the stored
- *         report. DECIDE: pick one and write it down here — do not silently
- *         pass a fake encounter, because requiredCapability reads age and
- *         pregnancy from it and a fabricated 30-year-old male would strip the
- *         obstetric and paediatric requirements from the filter.
+ *         When only `result` was supplied there is no encounter to pass.
+ *         DECIDED: require the caller to send `encounter`. The request has no
+ *         report id from which to load the real patient context, and inventing
+ *         one could strip obstetric or paediatric requirements from the filter.
  *
  *      c. const rows = await candidatesForVillage(input.villageId)
  *         if (rows.length === 0) {
@@ -81,13 +78,14 @@ import type { facilities as facilityContracts } from "@swasthyasetu/contracts";
 import type { FacilityCandidate } from "@swasthyasetu/core";
 import {
   NON_DIAGNOSTIC_DISCLAIMER,
+  DEFAULT_RANKING,
   rankFacilities,
   requiredCapability,
 } from "@swasthyasetu/core";
 
 import { candidatesForVillage, hasTravelTimes, type CandidateRow } from "./repo.ts";
 import { evaluate } from "../triage/service.ts";
-import { AppError } from "../../plugins/errors.ts";
+import { AppError, badRequest } from "../../plugins/errors.ts";
 
 type RecommendRequest = ReturnType<typeof facilityContracts.recommendRequest.parse>;
 type RecommendResponse = ReturnType<typeof facilityContracts.recommendResponse.parse>;
@@ -111,13 +109,13 @@ function toCandidate(row: CandidateRow): FacilityCandidate {
 }
 
 export async function recommend(input: RecommendRequest): Promise<RecommendResponse> {
-  // a. Resolve triage result — exactly one of result/encounter is present (enforced by Zod refine)
-  const encounter = input.encounter ?? {
-    patient: { ageMonths: 360, sex: "male" as const, pregnancy: "no" as const },
-    symptoms: [],
-    answers: {},
-  };
-  const result = input.result ?? evaluate(encounter);
+  // Capability filtering needs the real age and pregnancy context. A result
+  // alone cannot provide it, and fabricating context can misroute the patient.
+  if (!input.encounter) {
+    throw badRequest("Encounter is required for facility recommendations.");
+  }
+  const encounter = input.encounter;
+  const result = evaluate(encounter);
 
   // b. Capability requirement
   const requirement = requiredCapability(encounter, result);
@@ -130,12 +128,15 @@ export async function recommend(input: RecommendRequest): Promise<RecommendRespo
     }
   }
 
+  const rowsByFacilityId = new Map(rows.map((row) => [row.facility_id, row]));
+
   // d. Rank
   const outcome = rankFacilities(
     rows.map(toCandidate),
     requirement,
     result.tier,
     new Date().toISOString(),
+    { ...DEFAULT_RANKING, maxResults: input.maxResults },
   );
 
   // e+f. Map to wire format
@@ -145,30 +146,36 @@ export async function recommend(input: RecommendRequest): Promise<RecommendRespo
       minLevel: outcome.requirement.minLevel,
       requiredTags: outcome.requirement.requiredTags as RecommendResponse["requirement"]["requiredTags"],
     },
-    results: outcome.results.map((r) => ({
-      facility: {
-        facilityId:      r.facility.facilityId,
-        name:            r.facility.name,
-        facilityType:    r.facility.facilityType as RecommendResponse["results"][0]["facility"]["facilityType"],
-        capabilityLevel: r.facility.capabilityLevel,
-        capabilityTags:  r.facility.capabilityTags as RecommendResponse["results"][0]["facility"]["capabilityTags"],
-        districtCode:    input.villageId, // placeholder — enriched in Phase 6 if needed
-        latitude:        r.facility.latitude,
-        longitude:       r.facility.longitude,
-        phone:           r.facility.phone,
-        lastConfirmedAt: r.facility.lastConfirmedAt,
-        lastNegativeAt:  r.facility.lastNegativeAt,
-        isDemoData:      true,
-      },
-      score:         r.score,
-      breakdown:     r.breakdown,
-      freshness:     r.freshness,
-      travelSeconds: r.facility.travelSeconds,
-      distanceMeters: r.facility.distanceMeters,
-      travelEstimated: r.travelEstimated,
-      reasons:       r.reasons,
-      rank:          r.rank,
-    })),
+    results: outcome.results.map((r) => {
+      const row = rowsByFacilityId.get(r.facility.facilityId);
+      if (!row) {
+        throw new AppError("INTERNAL", "Facility routing data is inconsistent.", 500);
+      }
+      return {
+        facility: {
+          facilityId:      r.facility.facilityId,
+          name:            r.facility.name,
+          facilityType:    r.facility.facilityType as RecommendResponse["results"][0]["facility"]["facilityType"],
+          capabilityLevel: r.facility.capabilityLevel,
+          capabilityTags:  r.facility.capabilityTags as RecommendResponse["results"][0]["facility"]["capabilityTags"],
+          districtCode:    row.district_code,
+          latitude:        r.facility.latitude,
+          longitude:       r.facility.longitude,
+          phone:           r.facility.phone,
+          lastConfirmedAt: r.facility.lastConfirmedAt,
+          lastNegativeAt:  r.facility.lastNegativeAt,
+          isDemoData:      row.is_demo_data,
+        },
+        score:         r.score,
+        breakdown:     r.breakdown,
+        freshness:     r.freshness,
+        travelSeconds: r.facility.travelSeconds,
+        distanceMeters: r.facility.distanceMeters,
+        travelEstimated: r.travelEstimated,
+        reasons:       r.reasons,
+        rank:          r.rank,
+      };
+    }),
     fallbackApplied:    outcome.fallbackApplied,
     unmetRequirements:  outcome.unmetRequirements as RecommendResponse["unmetRequirements"],
     disclaimer:         NON_DIAGNOSTIC_DISCLAIMER,
