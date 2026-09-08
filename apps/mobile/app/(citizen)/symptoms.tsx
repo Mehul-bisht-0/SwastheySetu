@@ -10,6 +10,7 @@ import { t } from "../../src/i18n/strings.ts";
 import type { StringKey } from "../../src/i18n/strings.ts";
 import { ink, type, space } from "../../src/theme/tokens.ts";
 import type { SymptomCode } from "@swasthyasetu/core";
+import { safeBack } from "../../src/navigation/safeBack.ts";
 
 // Danger signs first — someone whose child is convulsing must not have to scroll
 const SYMPTOM_ORDER: SymptomCode[] = [
@@ -49,7 +50,7 @@ export default function SymptomsScreen(): React.ReactNode {
     <Screen
       title={t("symptoms.title")}
       scroll={false}
-      onBack={() => router.back()}
+      onBack={() => safeBack(router, "/(patient)/home")}
       footer={
         <Button
           label={t("symptoms.continue")}

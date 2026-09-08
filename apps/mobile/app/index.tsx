@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, BackHandler } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../src/ui/Screen.tsx";
 import { Button } from "../src/ui/Button.tsx";
 import { getSession } from "../src/state/session.ts";
+import { getPatientSession } from "../src/state/patientSession.ts";
 import { getLocale, setLocale, t } from "../src/i18n/strings.ts";
 import type { Locale } from "../src/i18n/strings.ts";
 import { ink, paper, radius, type, space, touch } from "../src/theme/tokens.ts";
@@ -38,6 +39,7 @@ export default function HomeEntry(): React.ReactNode {
 
   useEffect(() => {
     if (getSession()) router.replace("/(asha)/home");
+    else if (getPatientSession()) router.replace("/(patient)/home");
   }, [router]);
 
   function chooseLocale(nextLocale: Locale): void {
@@ -75,8 +77,8 @@ export default function HomeEntry(): React.ReactNode {
         <View style={styles.roleHeading}>
           <Text style={styles.roleLabel}>{t("role.citizen")}</Text>
         </View>
-        <Button label={t("asha.home.newTriage")} onPress={() => router.push("/(citizen)/patient")} />
-        <Button label={t("ivr.entry")} variant="secondary" onPress={() => router.push("/(citizen)/ivr")} />
+        <Button label="Patient sign in / मरीज साइन इन" onPress={() => router.push("/(patient)/login")} />
+        <Button label="Create patient account / मरीज खाता" variant="secondary" onPress={() => router.push("/(patient)/register")} />
       </View>
 
       <View style={styles.divider} />

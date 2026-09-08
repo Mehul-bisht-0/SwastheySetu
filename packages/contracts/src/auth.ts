@@ -14,7 +14,7 @@
 import { z } from "zod";
 import { deviceId, districtCode, isoDateTime, uuid } from "./common.ts";
 
-export const userRole = z.enum(["ASHA", "SUPERVISOR", "ADMIN"]);
+export const userRole = z.enum(["ASHA", "SUPERVISOR", "ADMIN", "PATIENT"]);
 export type UserRole = z.infer<typeof userRole>;
 
 /** Indian mobile number, normalised to +91XXXXXXXXXX before it reaches the DB. */

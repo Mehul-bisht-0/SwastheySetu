@@ -12,38 +12,42 @@ export function Screen(props: {
   onBack?: () => void;
 }): React.ReactNode {
   const scroll = props.scroll !== false;
-  const content = (
-    <>
-      {props.title ? (
-        <View style={styles.header}>
-          {props.onBack ? (
-            <Pressable
-              onPress={props.onBack}
-              accessibilityRole="button"
-              accessibilityLabel={t("action.back")}
-              style={({ pressed }) => [styles.back, pressed && styles.pressed]}
-            >
-              <Text style={styles.backArrow}>{"\u2039"}</Text>
-              <Text style={styles.backLabel}>{t("action.back")}</Text>
-            </Pressable>
-          ) : null}
-          <Text style={[styles.title, props.onBack && styles.titleWithBack]}>{props.title}</Text>
-        </View>
+  const header = props.title ? (
+    <View style={styles.header}>
+      {props.onBack ? (
+        <Pressable
+          onPress={props.onBack}
+          accessibilityRole="button"
+          accessibilityLabel={t("action.back")}
+          hitSlop={8}
+          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+        >
+          <Text style={styles.backArrow}>{"\u2039"}</Text>
+          <Text style={styles.backLabel}>{t("action.back")}</Text>
+        </Pressable>
       ) : null}
-      {props.children}
-    </>
-  );
+      <Text style={[styles.title, props.onBack && styles.titleWithBack]}>{props.title}</Text>
+    </View>
+  ) : null;
   return (
     <SafeAreaView style={styles.safe}>
+      {header}
       {scroll ? (
         <ScrollView
-          contentContainerStyle={[styles.scroll, props.footer ? styles.scrollWithFooter : styles.scrollNoFooter]}
+          style={styles.scroller}
+          contentContainerStyle={[
+            styles.scroll,
+            props.title && styles.scrollBelowHeader,
+            props.footer ? styles.scrollWithFooter : styles.scrollNoFooter,
+          ]}
           keyboardShouldPersistTaps="handled"
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
         >
-          {content}
+          {props.children}
         </ScrollView>
       ) : (
-        <View style={styles.fill}>{content}</View>
+        <View style={styles.fill}>{props.children}</View>
       )}
       {props.footer ? <View style={[styles.footer, elevation.lifted]}>{props.footer}</View> : null}
     </SafeAreaView>
@@ -52,19 +56,27 @@ export function Screen(props: {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: paper.base },
+  scroller: { flex: 1 },
   fill: { flex: 1, padding: space.md },
   scroll: { padding: space.md },
+  scrollBelowHeader: { paddingTop: 0 },
   scrollWithFooter: { paddingBottom: 96 },
   scrollNoFooter: { paddingBottom: space.xl },
-  header: { marginBottom: space.lg },
-  title: { ...(type.title as object), color: ink.strong },
-  titleWithBack: { marginTop: space.sm },
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: space.md,
+    paddingTop: space.sm,
+    paddingBottom: space.lg,
+  },
+  title: { ...(type.title as object), color: ink.strong, flexShrink: 1 },
+  titleWithBack: { flex: 1, paddingTop: 4 },
   back: {
-    alignSelf: "flex-start",
     minHeight: touch.min,
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: space.md,
+    paddingRight: space.sm,
+    marginRight: space.sm,
   },
   backArrow: { fontSize: 34, lineHeight: 36, color: ink.strong, marginRight: space.xs },
   backLabel: { ...(type.body as object), color: ink.strong, fontWeight: "600" },

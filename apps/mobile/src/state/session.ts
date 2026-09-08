@@ -4,7 +4,12 @@ import { api, TOKEN_KEY, request } from "../api/client.ts";
 import { refreshAshaVillages } from "../api/asha.ts";
 import { getDeviceId } from "./device.ts";
 
-export interface Session { ashaId: string; name: string; districtCode: string; }
+export interface Session {
+  ashaId: string;
+  name: string;
+  districtCode: string;
+  role: "ASHA" | "SUPERVISOR" | "ADMIN";
+}
 
 let session: Session | null = null;
 const listeners: Set<(s: Session | null) => void> = new Set();
@@ -18,8 +23,10 @@ export async function restoreSession(): Promise<Session | null> {
     const ashaId = (db.getFirstSync("SELECT value FROM app_meta WHERE key='session.ashaId'") as { value: string } | null)?.value;
     const name = (db.getFirstSync("SELECT value FROM app_meta WHERE key='session.name'") as { value: string } | null)?.value;
     const districtCode = (db.getFirstSync("SELECT value FROM app_meta WHERE key='session.district'") as { value: string } | null)?.value;
+    const storedRole = (db.getFirstSync("SELECT value FROM app_meta WHERE key='session.role'") as { value: string } | null)?.value;
     if (!ashaId || !districtCode) return null;
-    session = { ashaId, name: name ?? "", districtCode };
+    const role = storedRole === "SUPERVISOR" || storedRole === "ADMIN" ? storedRole : "ASHA";
+    session = { ashaId, name: name ?? "", districtCode, role };
     notify();
     return session;
   } catch { return null; }
@@ -27,7 +34,7 @@ export async function restoreSession(): Promise<Session | null> {
 
 export async function signIn(phone: string, password: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await request<{ accessToken: string; user: { userId: string; fullName: string; districtCode: string } }>(
+    const res = await request<{ accessToken: string; user: { userId: string; fullName: string; districtCode: string; role: "ASHA" | "SUPERVISOR" | "ADMIN" } }>(
       "/auth/login",
       { method: "POST", body: { phone, password, deviceId: getDeviceId(), platform: "android", appVersion: "0.1.0" }, auth: false },
     );
@@ -41,7 +48,8 @@ export async function signIn(phone: string, password: string): Promise<{ ok: boo
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.ashaId',?)", [res.data.user.userId]);
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.name',?)", [res.data.user.fullName]);
     db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.district',?)", [res.data.user.districtCode]);
-    session = { ashaId: res.data.user.userId, name: res.data.user.fullName, districtCode: res.data.user.districtCode };
+    db.runSync("INSERT OR REPLACE INTO app_meta (key,value) VALUES ('session.role',?)", [res.data.user.role]);
+    session = { ashaId: res.data.user.userId, name: res.data.user.fullName, districtCode: res.data.user.districtCode, role: res.data.user.role };
     notify();
     try { await refreshAshaVillages(); } catch { /* The authenticated session remains usable offline. */ }
     return { ok: true };

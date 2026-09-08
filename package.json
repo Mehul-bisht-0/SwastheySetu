@@ -2,6 +2,7 @@
   "name": "swasthyasetu",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*",
     "apps/api"
@@ -10,8 +11,9 @@
     "db:up": "docker compose -f infra/docker-compose.yml up -d db",
     "db:migrate": "npm -w @swasthyasetu/api run migrate",
     "db:seed": "npm -w @swasthyasetu/api run seed",
+    "dev:local": "node scripts/start-local.mjs",
     "dev:api": "npm -w @swasthyasetu/api run dev",
-    "dev:mobile": "npm --prefix apps/mobile run start",
+    "dev:mobile": "npm --prefix apps/mobile run start --",
     "test:core": "node --test packages/core/src/**/*.test.ts",
     "test:scenarios": "node --test tests/scenarios.test.ts",
     "test:mobile-storage": "node --test tests/mobile-outbox.test.mjs",

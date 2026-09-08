@@ -10,7 +10,7 @@ export function Button(props: {
   busy?: boolean;
 }): React.ReactNode {
   const v = props.variant ?? "primary";
-  const disabled = props.disabled ?? props.busy ?? false;
+  const disabled = (props.disabled ?? false) || (props.busy ?? false);
   const minH = v === "emergency" ? touch.emergency : touch.min;
   const bg = v === "primary" ? ink.strong : v === "emergency" ? tier.EMERGENCY.fill : paper.raised;
   const textColor = v === "secondary" ? ink.strong : "#FFFFFF";

@@ -11,7 +11,7 @@ export interface Envelope<T> {
 
 export async function request<T>(
   path: string,
-  opts?: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number; auth?: boolean },
+  opts?: { method?: "GET" | "POST"; body?: unknown; timeoutMs?: number; auth?: boolean; tokenKey?: string },
 ): Promise<Envelope<T>> {
   const method = opts?.method ?? "GET";
   const timeoutMs = opts?.timeoutMs ?? 20000;
@@ -22,7 +22,7 @@ export async function request<T>(
     if (opts?.auth !== false) {
       // Inside the try: SecureStore throws on an unavailable keychain, and the
       // timer used to be created before this point, so it leaked on that path.
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      const token = await SecureStore.getItemAsync(opts?.tokenKey ?? TOKEN_KEY);
       if (token) headers["Authorization"] = "Bearer " + token;
     }
     timer = setTimeout(() => ctrl.abort(), timeoutMs);

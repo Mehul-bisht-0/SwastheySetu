@@ -10,6 +10,7 @@ import { Field } from "../../src/ui/Field.tsx";
 import { StepIndicator } from "../../src/ui/StepIndicator.tsx";
 import { answer, toEncounter } from "../../src/state/triageDraft.ts";
 import { saveReport } from "../../src/db/dao/reports.ts";
+import { safeBack } from "../../src/navigation/safeBack.ts";
 import { getLocale, t } from "../../src/i18n/strings.ts";
 import { followUpQuestions } from "../../src/ivr/followUp.ts";
 import { useVoicePrompt, stopVoicePrompt } from "../../src/ivr/useVoicePrompt.ts";
@@ -53,7 +54,7 @@ export default function QuestionsScreen(): React.ReactNode {
   }
   const validNumber = /^\d+$/.test(numeric) && Number(numeric) <= (question?.max ?? 0);
   return (
-    <Screen title={locale === "hi" ? "कुछ और सवाल" : "Follow-up questions"} onBack={() => router.back()}>
+    <Screen title={locale === "hi" ? "कुछ और सवाल" : "Follow-up questions"} onBack={() => safeBack(router, "/(citizen)/symptoms")}>
       {error ? (
         <View style={styles.container}>
           <Text style={styles.errorText}>{t("error.saveFailed")}</Text>

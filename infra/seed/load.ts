@@ -124,6 +124,22 @@ export async function loadSeed(): Promise<void> {
     }
 
     // 3. Facilities — trigger derives geom from lat/lon, so do NOT set geom
+    // Ensure the sync trigger function is using the correct (longitude, latitude) order
+    await client.query(`
+      CREATE OR REPLACE FUNCTION facilities_sync_geom() RETURNS trigger AS $$
+      BEGIN
+        NEW.geom := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+        IF EXISTS (
+          SELECT 1 FROM unnest(NEW.capability_tags) AS t
+          WHERE t NOT IN (SELECT code FROM capability_codes)
+        ) THEN
+          RAISE EXCEPTION 'unknown capability tag in %', NEW.capability_tags;
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
     let facilityCount = 0;
     for (const f of facilities) {
       const tags = (f["capability_tags"] ?? "").split(";").map((t) => t.trim()).filter(Boolean);
@@ -141,6 +157,7 @@ export async function loadSeed(): Promise<void> {
                  facility_type    = EXCLUDED.facility_type,
                  capability_level = EXCLUDED.capability_level,
                  capability_tags  = EXCLUDED.capability_tags,
+                 district_code    = EXCLUDED.district_code,
                  latitude         = EXCLUDED.latitude,
                  longitude        = EXCLUDED.longitude,
                  phone            = EXCLUDED.phone`,
@@ -169,23 +186,45 @@ export async function loadSeed(): Promise<void> {
       facilityCount++;
     }
 
+    await client.query(
+      `UPDATE facilities
+          SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
+        WHERE district_code = $1`,
+      [districtCode],
+    );
+
     // 4. Seed two demo ASHA users (documented in README.md as dev-only)
     const hash1 = await bcrypt.hash("Asha@demo1!", 10);
     const hash2 = await bcrypt.hash("Asha@demo2!", 10);
+    const dispatcherHash = await bcrypt.hash("Dispatch@demo1!", 10);
 
     await client.query(
       `INSERT INTO users (phone, full_name, role, password_hash, district_code, is_active)
        VALUES ($1,$2,'ASHA',$3,$4,true)
        ON CONFLICT (phone) DO UPDATE
-         SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name`,
+         SET password_hash = EXCLUDED.password_hash,
+             full_name = EXCLUDED.full_name,
+             district_code = EXCLUDED.district_code`,
       ["+917001000001", "Demo ASHA Sunita", hash1, districtCode],
     );
     await client.query(
       `INSERT INTO users (phone, full_name, role, password_hash, district_code, is_active)
        VALUES ($1,$2,'ASHA',$3,$4,true)
        ON CONFLICT (phone) DO UPDATE
-         SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name`,
+         SET password_hash = EXCLUDED.password_hash,
+             full_name = EXCLUDED.full_name,
+             district_code = EXCLUDED.district_code`,
       ["+917001000002", "Demo ASHA Meena", hash2, districtCode],
+    );
+    await client.query(
+      `INSERT INTO users (phone, full_name, role, password_hash, district_code, is_active)
+       VALUES ($1,$2,'SUPERVISOR',$3,$4,true)
+       ON CONFLICT (phone) DO UPDATE
+         SET password_hash = EXCLUDED.password_hash,
+             full_name = EXCLUDED.full_name,
+             role = EXCLUDED.role,
+             district_code = EXCLUDED.district_code`,
+      ["+917001000003", "Demo Emergency Dispatcher", dispatcherHash, districtCode],
     );
 
     // 5. Seed facility_activity for the freshness spread.
@@ -249,17 +288,29 @@ export async function loadSeed(): Promise<void> {
     await client.query("COMMIT");
 
     // Verify geom consistency
-    const geomCheck = await client.query<{ ok: boolean }>(
-      `SELECT bool_and(abs(ST_X(geom::geometry) - longitude) < 0.0001
-                    AND abs(ST_Y(geom::geometry) - latitude) < 0.0001) AS ok
+    const geomCheck = await client.query<{ facility_count: number; ok: boolean | null }>(
+      `SELECT count(*)::int AS facility_count,
+              bool_and(abs(ST_X(geom::geometry) - longitude) < 0.0001
+                   AND abs(ST_Y(geom::geometry) - latitude) < 0.0001) AS ok
          FROM facilities WHERE district_code = $1`,
       [districtCode],
     );
+    if ((geomCheck.rows[0]?.facility_count ?? 0) === 0) {
+      throw new Error(`no facilities found for configured district ${districtCode} after seed`);
+    }
     if (!geomCheck.rows[0]?.ok) {
+      const mismatches = await client.query(
+        `SELECT name, latitude, longitude, ST_X(geom::geometry) AS gx, ST_Y(geom::geometry) AS gy
+           FROM facilities WHERE district_code = $1
+            AND (abs(ST_X(geom::geometry) - longitude) >= 0.0001
+             OR abs(ST_Y(geom::geometry) - latitude) >= 0.0001)`,
+        [districtCode],
+      );
+      console.error("Mismatched facilities:", mismatches.rows);
       throw new Error("geom/lat-lon mismatch detected after seed — check ST_MakePoint argument order");
     }
 
-    console.log(`seed complete: 1 district, ${villageCount} villages, ${facilityCount} facilities, 2 users, 4 activity rows`);
+    console.log(`seed complete: 1 district, ${villageCount} villages, ${facilityCount} facilities, 3 users, 4 activity rows`);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

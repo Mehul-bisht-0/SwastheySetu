@@ -72,6 +72,13 @@ export function replaceFacilityCache(facilities: FacilityRow[]): void {
   });
 }
 
+export function cachedFacilityCount(): number {
+  const row = getDb().getFirstSync(
+    "SELECT count(*) AS count FROM facilities_cache",
+  ) as { count: number } | null;
+  return row?.count ?? 0;
+}
+
 export function candidates(near: { lat: number; lon: number }, radiusKm: number): FacilityRow[] {
   const all = getDb().getAllSync("SELECT * FROM facilities_cache") as Array<{
     facility_id: string; name: string; type: string; district_code: string;

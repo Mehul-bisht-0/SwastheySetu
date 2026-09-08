@@ -7,6 +7,7 @@ import { initDb } from "../src/db/client.ts";
 import { releaseStale } from "../src/db/dao/outbox.ts";
 import { setLocale } from "../src/i18n/strings.ts";
 import { restoreSession } from "../src/state/session.ts";
+import { restorePatientSession } from "../src/state/patientSession.ts";
 import { startSyncDaemon } from "../src/sync/runner.ts";
 import { OfflineStrip } from "../src/ui/OfflineStrip.tsx";
 import { paper } from "../src/theme/tokens.ts";
@@ -39,6 +40,7 @@ export default function RootLayout(): React.ReactNode {
         releaseStale();
         setLocale("en");
         await restoreSession();
+        await restorePatientSession();
       } catch (e) {
         setBootError(String(e));
       } finally {

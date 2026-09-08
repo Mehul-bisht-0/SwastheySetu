@@ -72,6 +72,9 @@ import { syncRoutes } from "./modules/sync/routes.ts";
 import { ragRoutes } from "./modules/rag/routes.ts";
 import { assignmentRoutes } from "./modules/assignments/routes.ts";
 import { ivrRoutes } from "./modules/ivr/routes.ts";
+import { patientRoutes } from "./modules/patients/routes.ts";
+import { emergencyRoutes } from "./modules/emergencies/routes.ts";
+import { abhaRoutes } from "./modules/abha/routes.ts";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -107,6 +110,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(ragRoutes,        { prefix: "/rag" });
   await app.register(assignmentRoutes, { prefix: "/assignments" });
   await app.register(ivrRoutes,        { prefix: "/ivr" });
+  await app.register(patientRoutes,    { prefix: "/patients" });
+  await app.register(emergencyRoutes,  { prefix: "/emergencies" });
+  await app.register(abhaRoutes,       { prefix: "/patients/abha" });
 
   return app;
 }

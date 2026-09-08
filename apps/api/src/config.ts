@@ -33,6 +33,12 @@ const schema = z.object({
 
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
+  /** Development uses a no-document mock; production must integrate an authorised provider. */
+  IDENTITY_PROVIDER_MODE: z.enum(["mock", "external"]).default("mock"),
+
+  /** ABDM HIU/Consent Manager integration is simulated only outside production. */
+  ABDM_MODE: z.enum(["mock", "external"]).default("mock"),
+
   /**
    * MUST STAY false FOR v1. /rag/ask returns 501 and /health reports
    * ragEnabled: false, which is what makes the mobile app hide the entry point.
@@ -46,6 +52,21 @@ const schema = z.object({
 
   /** Only used by infra/routing/precompute.ts, never at request time. */
   OSRM_URL: z.string().url().optional(),
+}).superRefine((value, ctx) => {
+  if (value.NODE_ENV === "production" && value.IDENTITY_PROVIDER_MODE === "mock") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["IDENTITY_PROVIDER_MODE"],
+      message: "must be external in production",
+    });
+  }
+  if (value.NODE_ENV === "production" && value.ABDM_MODE === "mock") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["ABDM_MODE"],
+      message: "must be external in production",
+    });
+  }
 });
 
 export type Config = z.infer<typeof schema>;

@@ -7,6 +7,7 @@ export function Field(props: {
   help?: string; error?: string;
   keyboardType?: "default" | "number-pad" | "phone-pad";
   secure?: boolean;
+  multiline?: boolean;
 }): React.ReactNode {
   const [focused, setFocused] = useState(false);
   const borderColor = props.error ? "#8F1D14" : focused ? accent : paper.rule;
@@ -23,6 +24,7 @@ export function Field(props: {
         style={[styles.input, { borderColor, borderWidth }]}
         keyboardType={props.keyboardType ?? "default"}
         secureTextEntry={props.secure ?? false}
+        multiline={props.multiline ?? false}
         accessibilityLabel={props.label}
         allowFontScaling
       />

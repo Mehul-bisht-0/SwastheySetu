@@ -4,6 +4,7 @@ dist/
 .env
 .env.local
 .expo/
+.expo-export-check/
 .DS_Store
 coverage/
 .stabilization-export/

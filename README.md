@@ -10,14 +10,22 @@ SwasthyaSetu is an offline-first rural healthcare decision-support prototype for
 
 | Capability | Status |
 |---|---|
-| Public landing page | Implemented — ASHA sign-in plus patient symptom checker and voice guide |
+| Public landing page | Implemented — patient sign-in, patient registration and ASHA sign-in only |
 | Visual symptom checker | Implemented — details, symptoms, follow-up questions and offline result |
 | In-app voice guide | Implemented — Hindi/English spoken prompts and numbered screen choices |
 | Deterministic red flags and urgency scorecard | Implemented — shared by phone and API |
 | Clinical validation | **Not completed** |
-| Offline facility ranking | Implemented — capability, travel estimate and evidence freshness |
+| Offline facility ranking | Implemented — foreground location, capability, travel estimate, evidence freshness and bundled Nalanda demo fallback |
 | Live facility availability | **Not implemented and not claimed** |
 | ASHA authentication and worker-only home | Implemented |
+| Patient accounts and sign-in | Implemented prototype |
+| Patient identity-verification state | Implemented with a development mock; no documents are collected |
+| ABHA-linked emergency clinical summary | Implemented with explicit consent and a development mock; no card image or full record is stored |
+| Verified-patient SOS and nearest-facility dispatch queue | Implemented prototype with auditable status transitions |
+| Patient-consented urgent triage alert metadata | Implemented in the in-app facility-alert simulator; raw questionnaire answers are excluded |
+| Live Aadhaar/face-verification provider | **Not integrated** |
+| Live ABDM HIU/Consent Manager integration | **Not integrated** |
+| Live facility webhook/SMS and ambulance operations | **Not integrated** |
 | ASHA offline household visits and sync | Implemented |
 | Worker assignment and human handoff | Stage 2 Phase 1 implemented |
 | Keypad telephone IVR backend | Stage 2 Phase 2 provider-neutral prototype implemented |
@@ -35,8 +43,9 @@ The facility cache and seed are a Nalanda demonstration with simulated facility 
 
 The mobile app initializes SQLite, recovers interrupted outbox operations, restores a cached ASHA session and starts the sync coordinator.
 
-- Signed out: `/` shows ASHA sign-in, **Check symptoms** and **Use the voice guide**.
-- Signed in: `/` redirects to the ASHA home screen.
+- Signed out: `/` shows patient sign-in, patient registration and ASHA sign-in.
+- Signed-in patient: patient home shows **Check symptoms**, **Use the voice guide**, identity/ABHA controls and emergency actions.
+- Signed-in ASHA worker: `/` redirects to the ASHA home screen.
 - ASHA home contains only Case inbox, Record a visit, Waiting to send, Recent visits and Sign out.
 - Signing out returns to the public landing page.
 
@@ -87,6 +96,10 @@ The guide uses on-device text-to-speech. It is a screen-based accessibility flow
 The decision engine returns `EMERGENCY`, `GO_NOW`, `PHC_SOON` or `SELF_CARE`. The result shows the action, reasons, non-diagnostic notice and additional danger signs for `SELF_CARE`. All clinical wording and thresholds still require review.
 
 For in-person care, the user may grant foreground location permission or choose a cached village. Ranking runs on the phone and considers required capability, distance/travel estimates and evidence age. The app never says a facility is currently “open” or “available”; it shows evidence freshness and asks the user to confirm by phone.
+
+Opening the facility screen now primes an empty phone cache from the public API. If the API or device
+location cannot be used, a bundled copy of the Nalanda seed facilities remains accessible. The screen
+labels that fallback explicitly and never claims those records are near the user's current location.
 
 ### ASHA worker flow
 
@@ -188,6 +201,17 @@ Stage 2 server cases may contain identity and callback data. `CASE_RETENTION_DAY
 
 Phone ownership alone is not proof of identity. Patient/case data remains in authenticated application tables and is kept separate from the future RAG knowledge base.
 
+Patient verification uses a provider-reference model: Aadhaar numbers, Aadhaar images, selfies and
+face templates are not columns in the application schema. Development mode simulates the provider
+decision without collecting a document. Production requires an authorised provider, direct-to-provider
+upload, consent and retention review. See [docs/PATIENT_IDENTITY_AND_EMERGENCY.md](docs/PATIENT_IDENTITY_AND_EMERGENCY.md).
+
+An ABHA card/number identifies the patient within the ABDM ecosystem; the card itself is not the
+medical-history record. The prototype stores only a hash and masked display value for the ABHA
+identifier, an opaque consent reference, and a short-lived minimal emergency summary. A verified
+patient must separately consent to link the ABHA account and to share that summary with an emergency
+request. The mock never generates treatment or first-aid instructions.
+
 ### Known patient-report ownership gap
 
 The visual checker places reports in the local outbox. Signed-out sync refreshes public facility data but pushes queued writes only after ASHA authentication. Anonymous reports therefore remain local until a worker signs in, creating ambiguous attribution and consent.
@@ -205,6 +229,10 @@ The current behavior must not be presented as completed patient-to-ASHA submissi
 |---|---|---|
 | Health | `GET /health` | Public |
 | Authentication | `POST /auth/login`, `GET /auth/me` | Login public; profile authenticated |
+| Patient accounts | `POST /patients/register`, `POST /patients/login`, `GET /patients/me` | Registration/login public; profile authenticated |
+| Patient verification | `POST /patients/verification/sessions`, `POST /patients/verification/mock-complete` | Patient; mock completion disabled in production |
+| ABHA consent link | `GET /patients/abha/status`, `POST /patients/abha/link-sessions`, `POST /patients/abha/mock-complete` | Verified patient; mock completion disabled in production |
+| Emergency dispatch | `POST /emergencies`, `GET /emergencies/active`, dispatcher queue/status routes | Verified patient or district supervisor/admin |
 | Triage | `POST /triage/evaluate`, `POST /triage/reports` | Public prototype |
 | Facilities | Nearby and recommendation routes | Public reads; authenticated signals |
 | ASHA visits | `/asha/*` | Authenticated |
@@ -223,8 +251,15 @@ Routes validate HTTP input and delegate work. Business logic belongs in `service
 | `011_triage_result_snapshots.sql` | Client/server result snapshots for mismatch auditing |
 | `012_worker_assignment.sql` | Village roster, intake cases and assignment/handoff audit |
 | `013_keypad_ivr.sql` | IVR sessions, event replay, dial-code routing and IVR case metadata |
+| `014_patient_identity_emergency.sql` | Patient accounts, provider-referenced verification, SOS, dispatch audit and notification outbox |
+| `015_verification_face_liveness.sql` | Records that verification requires both offline e-KYC and provider-side face liveness |
+| `016_abha_emergency_summary.sql` | Hashed ABHA link references, time-bound consent, minimal emergency summaries and per-SOS sharing audit |
+| `017_emergency_triage_context.sql` | Patient-consented minimal urgent-triage snapshot attached to an SOS |
 
-**Migration checkpoint:** 011–013 have been applied only to the isolated `swasthyasetu_test` database used during this work. Do not run the chain against another database until Migration 011’s compatibility, data impact and necessity are reviewed for that target. See [docs/MIGRATION_011_REVIEW.md](docs/MIGRATION_011_REVIEW.md).
+**Migration checkpoint:** 014–017 are additive and are applied in this local development database. Review
+Migration 011’s compatibility plus Migrations 014–017 identity, consent, retention and emergency-operating model
+before applying the chain to any shared or production-like database. See
+[docs/MIGRATION_011_REVIEW.md](docs/MIGRATION_011_REVIEW.md).
 
 ## Repository layout
 
@@ -267,7 +302,7 @@ On a phone, `localhost` means the phone. Recheck the computer’s Wi-Fi IPv4 add
 
 ### Database safety gate
 
-Do not run `npm run db:migrate` against a new or existing database until Migration 011 has been reviewed for that exact target. The runner applies every migration in order, including 011–013. Test preparation requires `NODE_ENV=test` and a database name ending in `_test`; never point it at a working dataset.
+Do not run `npm run db:migrate` against a new or existing database until Migration 011 has been reviewed for that exact target. The runner applies every migration in order, including 011–017. Test preparation requires `NODE_ENV=test` and a database name ending in `_test`; never point it at a working dataset.
 
 ### Start the API
 
@@ -280,6 +315,16 @@ npm run dev:api
 The default port is 4000. Check `http://localhost:4000/health` on the computer and `http://YOUR_COMPUTER_LAN_IP:4000/health` from the phone browser.
 
 ### Start Expo
+
+For the normal Windows development workflow, change only `laptopIp` in
+`local-dev.config.json`, then start the database, migrations, API and Expo with one command:
+
+```powershell
+npm run dev:local
+```
+
+The launcher writes the matching secret-free mobile environment, reuses a healthy API when possible,
+selects a free Metro port and prints the QR for Expo Go.
 
 From the repository root:
 
@@ -295,6 +340,36 @@ npm run start -- --clear
 ```
 
 Do not run `npx expo start` from the repository root. That makes legacy `expo/AppEntry.js` search for a nonexistent root `App` file. Press `r` to reload and `Ctrl+C` to stop.
+
+### Emergency-dispatch prototype
+
+Create a patient account in the app, open identity verification and use the clearly labelled development
+simulation. No Aadhaar image or selfie is collected. A verified patient can then send an SOS after an
+explicit location-sharing confirmation.
+
+When an authenticated symptom check returns `EMERGENCY` or `GO_NOW`, the result screen offers a
+verified patient a direct handoff to SOS. A separate, default-off switch lets the patient share only a
+minimal triage snapshot: urgency tier, patient context, symptom codes, red-flag labels, assessment time
+and ruleset version. Raw questionnaire answers are not attached. The facility-alert simulator refreshes
+its district-scoped inbox every three seconds and displays the alert target, patient/location metadata,
+notification-outbox state and any consented triage or ABHA summary.
+
+A verified patient may also open **ABHA emergency summary**, enter an ABHA number/address and begin
+a separate consent flow. In development, the clearly labelled mock can attach synthetic allergies,
+medicines, conditions and blood group. Do not enter real medical information in this mock. On the SOS
+screen, the patient must explicitly enable sharing for that emergency; SOS remains available without
+ABHA data. The dispatcher sees only the consented, currently valid summary and a warning to confirm it
+with the patient and follow approved clinical protocols.
+
+The seeded district dispatcher signs in through the worker sign-in screen:
+
+```text
+Phone:    +917001000003
+Password: Dispatch@demo1!
+```
+
+Open **Facility emergency alerts (demo)**. Each operational claim must be recorded only after it happens:
+facility notified, request accepted, ambulance dispatched, arrived and completed.
 
 ## Verification
 

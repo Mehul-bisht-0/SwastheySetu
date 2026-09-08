@@ -6,6 +6,7 @@ import { Field, Choice } from "../../src/ui/Field.tsx";
 import { StepIndicator } from "../../src/ui/StepIndicator.tsx";
 import { setPatient } from "../../src/state/triageDraft.ts";
 import { t } from "../../src/i18n/strings.ts";
+import { safeBack } from "../../src/navigation/safeBack.ts";
 
 export default function PatientScreen(): React.ReactNode {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function PatientScreen(): React.ReactNode {
   }
 
   return (
-    <Screen title={t("patient.title")} onBack={() => router.back()} footer={
+    <Screen title={t("patient.title")} onBack={() => safeBack(router, "/(patient)/home")} footer={
       <Button label={t("action.next")} onPress={onContinue} disabled={!canContinue} />
     }>
       <StepIndicator current={1} total={3} label={t("patient.title")} showLabel={false} />

@@ -7,6 +7,7 @@ import { signIn } from "../../src/state/session.ts";
 import { t } from "../../src/i18n/strings.ts";
 import { View, Text, StyleSheet } from "react-native";
 import { ink, type, space } from "../../src/theme/tokens.ts";
+import { safeBack } from "../../src/navigation/safeBack.ts";
 
 export default function LoginScreen(): React.ReactNode {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function LoginScreen(): React.ReactNode {
     if (res.ok) router.replace("/(asha)/home"); else setError(res.error ?? t("asha.login.failed"));
   }
   return (
-    <Screen title={t("asha.login.title")} onBack={() => router.back()} footer={<Button label={t("asha.login.submit")} onPress={onSubmit} busy={busy} disabled={!phone || !password} />}>
+    <Screen title={t("asha.login.title")} onBack={() => safeBack(router, "/")} footer={<Button label={t("asha.login.submit")} onPress={onSubmit} busy={busy} disabled={!phone || !password} />}>
       <Field label={t("asha.login.phone")} value={phone} onChange={setPhone} keyboardType="phone-pad" />
       <Field label={t("asha.login.password")} value={password} onChange={setPassword} secure />
       {error ? <Text style={styles.error}>{error}</Text> : null}

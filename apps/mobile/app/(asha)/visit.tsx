@@ -10,6 +10,7 @@ import { getSession } from "../../src/state/session.ts";
 import { runSync } from "../../src/sync/runner.ts";
 import { ink, paper, radius, space, system, touch, type } from "../../src/theme/tokens.ts";
 import { Button } from "../../src/ui/Button.tsx";
+import { safeBack } from "../../src/navigation/safeBack.ts";
 import { Choice, Field } from "../../src/ui/Field.tsx";
 import { Screen } from "../../src/ui/Screen.tsx";
 
@@ -71,7 +72,7 @@ export default function VisitScreen(): React.ReactNode {
       });
       void runSync("manual");
       Alert.alert("", t("asha.visit.saved"));
-      router.back();
+      safeBack(router, "/(asha)/home");
     } catch {
       setError(t("error.saveFailed"));
     }

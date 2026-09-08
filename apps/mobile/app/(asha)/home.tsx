@@ -40,6 +40,9 @@ export default function HomeScreen(): React.ReactNode {
   return (
     <Screen title={t("asha.home.title")}>
       <View style={styles.actions}>
+        {session?.role === "SUPERVISOR" || session?.role === "ADMIN"
+          ? <Button label="Facility emergency alerts (demo)" onPress={() => router.push("/(asha)/dispatch")} />
+          : null}
         <Button label={getLocale() === 'hi' ? 'केस इनबॉक्स' : 'Case inbox'} onPress={() => router.push('./inbox')} />
         <Button label={t("asha.home.newVisit")} onPress={() => router.push("/(asha)/visit")} />
         <Button label={t("asha.home.queue")} variant="secondary" onPress={() => router.push("/(asha)/queue")} />
