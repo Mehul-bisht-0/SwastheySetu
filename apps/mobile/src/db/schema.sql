@@ -39,7 +39,7 @@ PRAGMA foreign_keys = ON;
 -- almost every screen, so it stays a single table rather than several.
 --
 -- Keys in use:
---   locale              'hi' | 'en'
+--   locale              'hi' | 'mr' | 'en'
 --   sync.pullCursor     opaque cursor from the last successful GET /sync/pull
 --   sync.lastPushAt     ISO timestamp of the last successful push
 --   sync.lastPullAt     ISO timestamp of the last successful pull

@@ -4,7 +4,7 @@ import { pool } from '../../db/pool.ts';
 import type { CaseMetadata, CreateCase } from '@swasthyasetu/contracts/assignments';
 
 export interface IvrCaseInput {
-  caseId: string; villageId: string; districtCode: string; language: 'hi'|'en';
+  caseId: string; villageId: string; districtCode: string; language: 'hi'|'mr'|'en';
   intake: CreateCase['intake']; consentVersion: string; consentAt: string; confirmedAt: string;
   complete: boolean; handoffReason: CaseMetadata['handoff_reason'];
 }

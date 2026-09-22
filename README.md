@@ -10,9 +10,9 @@ SwasthyaSetu is an offline-first rural healthcare decision-support prototype for
 
 | Capability | Status |
 |---|---|
-| Public landing page | Implemented — patient sign-in, patient registration and ASHA sign-in only |
-| Visual symptom checker | Implemented — details, symptoms, follow-up questions and offline result |
-| In-app voice guide | Implemented — Hindi/English spoken prompts and numbered screen choices |
+| Public landing page | Implemented — public symptom check, patient sign-in/registration and ASHA sign-in |
+| Visual symptom checker | Implemented — patient context plus a 15-question adaptive, offline intake and result |
+| In-app voice guide | Implemented — Hindi/Marathi/English spoken prompts and numbered screen choices |
 | Deterministic red flags and urgency scorecard | Implemented — shared by phone and API |
 | Clinical validation | **Not completed** |
 | Offline facility ranking | Implemented — foreground location, capability, travel estimate, evidence freshness and bundled Nalanda demo fallback |
@@ -43,7 +43,7 @@ The facility cache and seed are a Nalanda demonstration with simulated facility 
 
 The mobile app initializes SQLite, recovers interrupted outbox operations, restores a cached ASHA session and starts the sync coordinator.
 
-- Signed out: `/` shows patient sign-in, patient registration and ASHA sign-in.
+- Signed out: `/` offers the public symptom check, patient sign-in/registration and ASHA sign-in.
 - Signed-in patient: patient home shows **Check symptoms**, **Use the voice guide**, identity/ABHA controls and emergency actions.
 - Signed-in ASHA worker: `/` redirects to the ASHA home screen.
 - ASHA home contains only Case inbox, Record a visit, Waiting to send, Recent visits and Sign out.
@@ -54,26 +54,28 @@ The mobile app initializes SQLite, recovers interrupted outbox operations, resto
 ```text
 Public home
   -> Patient details
-  -> Select symptoms
-  -> Follow-up questions
+  -> 15-question adaptive symptom and body-location intake
   -> Deterministic on-device urgency evaluation
-  -> Result, explanation and safety notice
+  -> Result, reported-location summary, explanation and safety notice
   -> Facility ranking when in-person care is recommended
 ```
 
-The follow-up sequence remains part of the application and covers:
+The normal non-emergency path contains 15 numbered questions. It starts with the main concern and
+danger signs, then covers:
 
-- ability to drink;
+- ability to drink or feed;
 - severe headache when pregnancy may be relevant;
 - blood in stool when diarrhoea was selected;
 - persistent vomiting when vomiting was selected;
-- symptom and fever duration;
+- broad body region, side and a dynamically selected subregion;
+- symptom type, onset, exact duration and severity;
 - reduced activity;
 - long-term health conditions;
-- whether the concern is getting worse; and
-- pain score.
+- whether the concern is worsening or spreading;
+- relevant triggers; and
+- final confirmation of the user-reported location.
 
-If a symptom or follow-up answer activates an emergency red flag, the remaining questionnaire ends and the emergency result appears immediately. The scorecard never runs after a red flag fires.
+If an answer activates an emergency red flag, the remaining questionnaire ends and the emergency result appears immediately. A GO_NOW red flag returns after the initial safety questions. The scorecard never runs after a red flag fires. Body location is displayed as information the user reported; it does not identify an organ, change urgency or produce a diagnosis.
 
 Evaluation and local saving require no API. The report and immutable outbox operation are written atomically. Recent work fixed the anonymous offline save without removing any follow-up questions.
 
@@ -81,11 +83,10 @@ Evaluation and local saving require no API. The report and immutable outbox oper
 
 ```text
 Public home
-  -> Hindi or English
+  -> Hindi, Marathi or English
   -> Spoken prototype and safety introduction
   -> Age, sex and pregnancy
-  -> Spoken numbered symptom choices
-  -> The same follow-up questions in voice mode
+  -> The same 15 adaptive questions with numbered choices
   -> The same deterministic result, read aloud
 ```
 
@@ -163,7 +164,7 @@ Stage 2 Phase 2 implements:
 
 ```text
 Incoming call
-  -> Hindi or English
+  -> Hindi, Marathi or English
   -> Automated-system, storage and no-recording notice
   -> Consent
   -> Calling for self or another person
@@ -396,10 +397,10 @@ After the recent landing, queue and patient-save changes, mobile typecheck passe
 1. **Resolve anonymous report ownership and consent.** Keep patient checks local or add an explicitly consented submission workflow.
 2. **Add review and confirmation.** Confirm demographics, symptoms and important answers before non-emergency submission.
 3. **Add the patient privacy notice.** Explain local storage, optional sharing, retention and follow-up.
-4. **Complete Hindi coverage.** Some visual labels and operational messages remain English-only.
+4. **Complete language review.** Some visual labels and operational messages remain English-only; Marathi health and safety copy still needs native-speaker review.
 5. **Validate emergency and handoff actions.** Clinical/program owners must approve wording, contact behavior and response expectations.
 6. **Separate supervisor operations.** Keep roster/reassignment management out of normal worker tasks.
-7. **Complete device testing.** Cheap Android phones, large fonts, screen readers, Hindi speech, airplane mode, transitions, force quit and recovery.
+7. **Complete device testing.** Cheap Android phones, large fonts, screen readers, Hindi and Marathi speech, airplane mode, transitions, force quit and recovery.
 8. **Improve support diagnostics.** Show privacy-safe support codes or actionable causes for save, login and connectivity failures.
 
 ### Real-patient pilot gates
@@ -421,7 +422,7 @@ Phase 3 requires separate approval. Intended work:
 
 - evaluate Indian telephony, STT and TTS providers with costs and alternatives;
 - keep providers behind adapters;
-- support Hindi/English with extensible language packs;
+- support Hindi/Marathi/English with extensible language packs;
 - transcribe speech and extract only approved intake fields;
 - confirm important extracted answers;
 - produce a concise, labelled AI summary;

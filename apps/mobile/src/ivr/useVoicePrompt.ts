@@ -11,6 +11,7 @@ import type { Locale } from "../i18n/strings.ts";
 
 const LANGUAGE: Record<Locale, string> = {
   hi: "hi-IN",
+  mr: "mr-IN",
   en: "en-IN",
 };
 
@@ -28,10 +29,22 @@ export function useVoicePrompt(
     requestId.current = thisRequest;
     setSpeechFailed(false);
     void Speech.stop()
-      .then(() => {
+      .then(async () => {
         if (requestId.current !== thisRequest) return;
+        const voices = await Speech.getAvailableVoicesAsync();
+        if (requestId.current !== thisRequest) return;
+        const requestedLanguage = LANGUAGE[locale].toLowerCase();
+        const voice = voices.find((candidate) => candidate.language.toLowerCase() === requestedLanguage)
+          ?? voices.find((candidate) => candidate.language.toLowerCase().startsWith(`${locale}-`));
+        // Some platforms return no inventory even though system TTS works. Only
+        // block a known-missing Marathi voice; never substitute English speech.
+        if (locale === "mr" && voices.length > 0 && !voice) {
+          setSpeechFailed(true);
+          return;
+        }
         Speech.speak(text, {
           language: LANGUAGE[locale],
+          ...(voice ? { voice: voice.identifier } : {}),
           pitch: 1,
           rate: 0.82,
           onError: () => setSpeechFailed(true),

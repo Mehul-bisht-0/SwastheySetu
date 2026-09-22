@@ -53,7 +53,7 @@ function webhook(callId: string,type: 'START'|'DTMF'|'TIMEOUT'|'HANGUP',digits?:
 async function digit(callId: string,value: string) { const response=await webhook(callId,'DTMF',value); assert.equal(response.statusCode,200,response.payload); return response; }
 async function reachVillage(callId: string) {
   assert.equal((await webhook(callId,'START')).statusCode,200);
-  await digit(callId,'2'); await digit(callId,'1'); await digit(callId,'1'); await digit(callId,dialCode+'#');
+  await digit(callId,'3'); await digit(callId,'1'); await digit(callId,'1'); await digit(callId,dialCode+'#');
 }
 async function token(id: string,role: string) { return app.jwt.sign({ sub:id,role,district,did:'ivr-test-device' }); }
 
@@ -62,6 +62,17 @@ test('provider authentication is mandatory and unsupported providers are rejecte
   const body={ eventId:'auth-test',callId:'ivr-test-auth',type:'START',callerNumber:'+919876543210' };
   assert.equal((await app.inject({ method:'POST',url:'/ivr/webhooks/prototype',payload:body })).statusCode,401);
   assert.equal((await app.inject({ method:'POST',url:'/ivr/webhooks/other',headers:{'x-ivr-webhook-secret':secret},payload:body })).statusCode,400);
+});
+
+test('Marathi can be selected and the phone agent continues in Marathi',async t => {
+  if (!ready) return t.skip('requires isolated *_test database with migration 018');
+  const callId='ivr-test-marathi-'+randomUUID();
+  assert.equal((await webhook(callId,'START')).statusCode,200);
+  const response=await digit(callId,'2');
+  assert.equal(response.json().state,'CONSENT');
+  assert.match(response.payload,/स्वयंचलित प्रात्यक्षिक सेवा/);
+  const [row]=await query<{language:string}>('SELECT language FROM ivr_calls WHERE provider_call_id=$1',[callId]);
+  assert.equal(row?.language,'mr');
 });
 
 test('completed keypad intake is replay-safe and uses Phase 1 worker assignment/privacy',async t => {

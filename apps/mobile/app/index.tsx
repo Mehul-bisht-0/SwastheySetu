@@ -7,6 +7,7 @@ import { getSession } from "../src/state/session.ts";
 import { getPatientSession } from "../src/state/patientSession.ts";
 import { getLocale, setLocale, t } from "../src/i18n/strings.ts";
 import type { Locale } from "../src/i18n/strings.ts";
+import { saveLocalePreference } from "../src/db/dao/preferences.ts";
 import { ink, paper, radius, type, space, touch } from "../src/theme/tokens.ts";
 
 function LanguageChoice(props: {
@@ -44,6 +45,7 @@ export default function HomeEntry(): React.ReactNode {
 
   function chooseLocale(nextLocale: Locale): void {
     setLocale(nextLocale);
+    saveLocalePreference(nextLocale);
     setScreenLocale(nextLocale);
   }
 
@@ -60,6 +62,7 @@ export default function HomeEntry(): React.ReactNode {
           accessibilityLabel={t("ivr.language.title")}
         >
           <LanguageChoice value="hi" selected={locale === "hi"} label={t("ivr.language.hindi")} onSelect={chooseLocale} />
+          <LanguageChoice value="mr" selected={locale === "mr"} label={t("ivr.language.marathi")} onSelect={chooseLocale} />
           <LanguageChoice value="en" selected={locale === "en"} label={t("ivr.language.english")} onSelect={chooseLocale} />
         </View>
       </View>
@@ -77,8 +80,9 @@ export default function HomeEntry(): React.ReactNode {
         <View style={styles.roleHeading}>
           <Text style={styles.roleLabel}>{t("role.citizen")}</Text>
         </View>
-        <Button label="Patient sign in / मरीज साइन इन" onPress={() => router.push("/(patient)/login")} />
-        <Button label="Create patient account / मरीज खाता" variant="secondary" onPress={() => router.push("/(patient)/register")} />
+        <Button label={t("asha.home.newTriage")} onPress={() => router.push("/(citizen)/patient")} />
+        <Button label={locale === "mr" ? "रुग्ण म्हणून प्रवेश करा" : locale === "hi" ? "मरीज़ साइन इन" : "Patient sign in"} onPress={() => router.push("/(patient)/login")} />
+        <Button label={locale === "mr" ? "रुग्ण खाते तयार करा" : locale === "hi" ? "मरीज़ खाता बनाएँ" : "Create patient account"} variant="secondary" onPress={() => router.push("/(patient)/register")} />
       </View>
 
       <View style={styles.divider} />

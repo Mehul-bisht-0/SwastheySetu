@@ -3,10 +3,10 @@ import { useRouter } from "expo-router";
 import { Screen } from "../../src/ui/Screen.tsx";
 import { Button } from "../../src/ui/Button.tsx";
 import { Field, Choice } from "../../src/ui/Field.tsx";
-import { StepIndicator } from "../../src/ui/StepIndicator.tsx";
 import { setPatient } from "../../src/state/triageDraft.ts";
 import { t } from "../../src/i18n/strings.ts";
 import { safeBack } from "../../src/navigation/safeBack.ts";
+import { getPatientSession } from "../../src/state/patientSession.ts";
 
 export default function PatientScreen(): React.ReactNode {
   const router = useRouter();
@@ -28,14 +28,13 @@ export default function PatientScreen(): React.ReactNode {
     if (!ageIsValid || ageMonths === null || sex === null) return;
     const preg = showPregnancy ? (pregnancy ?? "unknown") : "no";
     setPatient({ ageMonths, sex, pregnancy: preg });
-    router.push("/(citizen)/symptoms");
+    router.push("/(citizen)/questions");
   }
 
   return (
-    <Screen title={t("patient.title")} onBack={() => safeBack(router, "/(patient)/home")} footer={
+    <Screen title={t("patient.title")} onBack={() => safeBack(router, getPatientSession() ? "/(patient)/home" : "/")} footer={
       <Button label={t("action.next")} onPress={onContinue} disabled={!canContinue} />
     }>
-      <StepIndicator current={1} total={3} label={t("patient.title")} showLabel={false} />
       <Field
         label={t("patient.age")}
         value={ageStr}

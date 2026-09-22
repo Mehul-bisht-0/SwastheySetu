@@ -31,6 +31,7 @@ export default function HomeScreen(): React.ReactNode {
   }, [session?.districtCode]));
 
   const villageNames = new Map(villages.map((village) => [village.villageId, village.name]));
+  const locale = getLocale();
 
   async function leaveWorkerSession(): Promise<void> {
     await signOut();
@@ -43,7 +44,7 @@ export default function HomeScreen(): React.ReactNode {
         {session?.role === "SUPERVISOR" || session?.role === "ADMIN"
           ? <Button label="Facility emergency alerts (demo)" onPress={() => router.push("/(asha)/dispatch")} />
           : null}
-        <Button label={getLocale() === 'hi' ? 'केस इनबॉक्स' : 'Case inbox'} onPress={() => router.push('./inbox')} />
+        <Button label={locale === "mr" ? "प्रकरणांची पेटी" : locale === 'hi' ? 'केस इनबॉक्स' : 'Case inbox'} onPress={() => router.push('./inbox')} />
         <Button label={t("asha.home.newVisit")} onPress={() => router.push("/(asha)/visit")} />
         <Button label={t("asha.home.queue")} variant="secondary" onPress={() => router.push("/(asha)/queue")} />
       </View>
@@ -63,7 +64,7 @@ export default function HomeScreen(): React.ReactNode {
         );
       })}
       <Button
-        label={getLocale() === "hi" ? "साइन आउट करें" : "Sign out"}
+        label={locale === "mr" ? "बाहेर पडा" : locale === "hi" ? "साइन आउट करें" : "Sign out"}
         variant="secondary"
         onPress={() => void leaveWorkerSession()}
       />

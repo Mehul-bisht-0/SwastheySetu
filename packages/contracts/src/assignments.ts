@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const handoffReason = z.enum(['CALLER_REQUEST','UNDERSTANDING_DIFFICULTY','UNSUPPORTED_REQUEST','WORKER_UNABLE']);
 export const createCase = z.object({
-  caseId: z.string().uuid(), villageId: z.string().uuid(), language: z.enum(['hi','en']),
+  caseId: z.string().uuid(), villageId: z.string().uuid(), language: z.enum(['hi','mr','en']),
   intake: z.object({
     name: z.string().trim().min(1).max(160), phone: z.string().regex(/^\+?[0-9]{7,15}$/),
     location: z.string().trim().min(1).max(500), reason: z.string().trim().min(1).max(2000),
@@ -27,7 +27,7 @@ export type CreateCase = z.infer<typeof createCase>;
 export type ChangeCase = z.infer<typeof changeCase>;
 export interface CaseMetadata {
   case_id: string; village_id: string; assigned_asha_id: string | null;
-  language: 'hi' | 'en'; status: 'UNASSIGNED' | 'ASSIGNED' | 'ACKNOWLEDGED' | 'HANDOFF_REQUESTED' | 'CLOSED';
+  language: 'hi' | 'mr' | 'en'; status: 'UNASSIGNED' | 'ASSIGNED' | 'ACKNOWLEDGED' | 'HANDOFF_REQUESTED' | 'CLOSED';
   handoff_reason: z.infer<typeof handoffReason> | null; version: number;
   source: 'ASHA_TEST' | 'KEYPAD_IVR'; intake_complete: boolean;
   created_at: string; updated_at: string; expires_at: string;

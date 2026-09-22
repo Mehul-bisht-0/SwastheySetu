@@ -39,11 +39,36 @@ const words = {
   CALLER_REQUEST: ['Caller requested assistance','कॉलर ने सहायता माँगी'], UNDERSTANDING_DIFFICULTY: ['Could not understand','समझने में कठिनाई'],
   UNSUPPORTED_REQUEST: ['Request outside supported workflow','अनुरोध कार्यप्रवाह से बाहर'], WORKER_UNABLE: ['Worker needs another person to take over','कार्यकर्ता को दूसरे व्यक्ति की सहायता चाहिए'],
 } as const;
-function w(key: keyof typeof words) { return words[key][getLocale() === 'hi' ? 1 : 0]; }
+const marathiWords: Record<keyof typeof words, string> = {
+  title: 'प्रकरणांची पेटी', refresh: 'ताजे करा', connected: 'इंटरनेट आवश्यक आहे. ही स्क्रीन सोडल्यानंतर प्रकरणाची माहिती काढली जाईल.',
+  empty: 'या पानावर कोणतेही प्रकरण नाही.', error: 'विनंती पूर्ण झाली नाही. इंटरनेट जोडून ताजे करा; प्रकरण बदललेले असू शकते.',
+  village: 'गाव', worker: 'कार्यकर्ता', none: 'मुख्य कार्यकर्ता नाही', roster: 'पुढील प्रकरणांसाठी मुख्य कार्यकर्ता जतन करा',
+  rosterNote: 'कार्यकर्ता यादीतील बदल पुढील प्रकरणांना लागू होतील. जुनी प्रकरणे स्वतंत्रपणे सोपवा.', view: 'सोपवलेले प्रकरण वाचा',
+  acknowledge: 'मिळाल्याची नोंद करा', handoff: 'मानवी मदतीची विनंती करा', close: 'मानवी पाठपुरावा पूर्ण झाला',
+  reassign: 'निवडलेल्या कार्यकर्त्याला सोपवा', pending: 'एआय सारांश अद्याप उपलब्ध नाही. पुष्टी केलेली माहिती आणि प्रतिलेख वाचा.',
+  transcript: 'प्रतिलेख', missing: 'नोंद उपलब्ध नाही', reason: 'मदत मागण्याचे कारण',
+  responsibility: 'मदतीची विनंती ही आपत्कालीन सेवा नाही. पुन्हा सोपवेपर्यंत सध्याचा कार्यकर्ता जबाबदार राहतो.',
+  previous: 'मागील पान', next: 'पुढील पान', sample: 'काल्पनिक चाचणी प्रकरण पाठवा',
+  consent: 'केवळ चाचणी: हा स्वयंचलित नमुना आहे. ही काल्पनिक माहिती ठरलेल्या कालावधीसाठी जतन करून कार्यकर्त्याला पाठवायची का?',
+  yes: 'मी सहमत आहे आणि काल्पनिक चाचणी माहितीची पुष्टी करतो/करते', test: 'केवळ काल्पनिक चाचणी. खऱ्या व्यक्तीची माहिती लिहू नका.',
+  submitted: 'चाचणी प्रकरण पाठवले. न सोपवलेली प्रकरणे पर्यवेक्षकाच्या यादीत दिसतील.', ivr: 'कीपॅड फोनवरील माहिती',
+  incomplete: 'माहिती अपूर्ण — तपासणी आवश्यक', saved: 'जतन केले.', UNASSIGNED: 'कार्यकर्ता सोपवणे बाकी',
+  ASSIGNED: 'स्वीकृतीची वाट पाहत आहे', ACKNOWLEDGED: 'मानवी पाठपुरावा सुरू आहे', HANDOFF_REQUESTED: 'मानवी मदत मागितली आहे',
+  CLOSED: 'पाठपुरावा पूर्ण', CALLER_REQUEST: 'कॉल करणाऱ्याने मदत मागितली', UNDERSTANDING_DIFFICULTY: 'समजण्यात अडचण आली',
+  UNSUPPORTED_REQUEST: 'विनंती समर्थित कार्यपद्धतीबाहेर आहे', WORKER_UNABLE: 'दुसऱ्या कार्यकर्त्याने जबाबदारी घेणे आवश्यक आहे',
+};
+function w(key: keyof typeof words) {
+  const locale = getLocale();
+  return locale === 'mr' ? marathiWords[key] : words[key][locale === 'hi' ? 1 : 0];
+}
 const intakeLabels: Record<string, readonly [string,string]> = {
   name: ['Name','नाम'], phone: ['Phone','फ़ोन'], location: ['Location','स्थान'], reason: ['Reason for contact','संपर्क का कारण'],
   context: ['Context','संदर्भ'], concerns: ['Stated concerns','बताई गई चिंताएँ'], duration: ['Duration / timing','अवधि / समय'],
   callback: ['Callback preference','वापस कॉल की पसंद'], notes: ['Notes','टिप्पणियाँ'],
+};
+const marathiIntakeLabels: Record<string, string> = {
+  name: 'नाव', phone: 'फोन', location: 'ठिकाण', reason: 'संपर्काचे कारण', context: 'संदर्भ',
+  concerns: 'सांगितलेल्या चिंता', duration: 'कालावधी / वेळ', callback: 'परत फोन करण्याची पसंती', notes: 'नोंदी',
 };
 function unwrap<T>(res: Envelope<T>): T { if (!res.ok || !res.data) throw new Error('Request failed'); return res.data; }
 
@@ -111,7 +136,7 @@ export default function Inbox(): React.ReactNode {
       {!items.length && !busy ? <Text>{w('empty')}</Text> : null}
       {items.map(row => <Card key={row.case_id} heading={w(row.status)}>
         <Text>{row.case_id}</Text><Text>{directory?.villages.find(v => v.village_id === row.village_id)?.name}</Text>
-        <Text>{new Date(row.created_at).toLocaleString()} · {row.language === 'hi' ? 'हिन्दी' : 'English'}</Text>
+        <Text>{new Date(row.created_at).toLocaleString()} · {row.language === 'mr' ? 'मराठी' : row.language === 'hi' ? 'हिन्दी' : 'English'}</Text>
         {row.source === 'KEYPAD_IVR' ? <Text>{w('ivr')}</Text> : null}
         {!row.intake_complete ? <Text>{w('incomplete')}</Text> : null}
         <Text>{row.assigned_asha_id ? directory?.workers.find(u => u.user_id === row.assigned_asha_id)?.full_name ?? row.assigned_asha_id : w('none')}</Text>
@@ -119,7 +144,7 @@ export default function Inbox(): React.ReactNode {
         {directory?.canManage ? <Button label={w('reassign')} disabled={busy || !worker || worker === 'none' || worker === row.assigned_asha_id || row.status === 'CLOSED'} onPress={() => worker && action(row,{ action: 'REASSIGN',ashaId: worker })} /> : <>
           <Button label={w('view')} disabled={busy} onPress={() => void read(row.case_id)} />
           {detail?.case_id === row.case_id ? <View style={{ gap: 8 }}>
-            {Object.entries(detail.intake).map(([key,value]) => <Text key={key}>{intakeLabels[key]?.[getLocale() === 'hi' ? 1 : 0] ?? key}: {value}</Text>)}
+            {Object.entries(detail.intake).map(([key,value]) => <Text key={key}>{getLocale() === 'mr' ? marathiIntakeLabels[key] ?? key : intakeLabels[key]?.[getLocale() === 'hi' ? 1 : 0] ?? key}: {value}</Text>)}
             <Text>{w('pending')}</Text><Text>{w('transcript')}: {detail.transcript ?? w('missing')}</Text>
           </View> : null}
           {row.status === 'ASSIGNED' ? <Button label={w('acknowledge')} disabled={busy} onPress={() => action(row,{ action: 'ACKNOWLEDGE' })} /> : null}

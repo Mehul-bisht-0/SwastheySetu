@@ -6,6 +6,7 @@ import { View, Text } from "react-native";
 import { initDb } from "../src/db/client.ts";
 import { releaseStale } from "../src/db/dao/outbox.ts";
 import { setLocale } from "../src/i18n/strings.ts";
+import { loadLocalePreference } from "../src/db/dao/preferences.ts";
 import { restoreSession } from "../src/state/session.ts";
 import { restorePatientSession } from "../src/state/patientSession.ts";
 import { startSyncDaemon } from "../src/sync/runner.ts";
@@ -38,7 +39,7 @@ export default function RootLayout(): React.ReactNode {
       try {
         await initDb();
         releaseStale();
-        setLocale("en");
+        setLocale(loadLocalePreference() ?? "en");
         await restoreSession();
         await restorePatientSession();
       } catch (e) {

@@ -13,6 +13,7 @@ import { ink, type, space, system } from "../../src/theme/tokens.ts";
 import type { TierKey } from "../../src/theme/tokens.ts";
 import type { ReportRow } from "../../src/db/dao/reports.ts";
 import { getPatientSession } from "../../src/state/patientSession.ts";
+import { reportedLocation } from "../../src/ivr/questionnaire.ts";
 
 export default function ResultScreen(): React.ReactNode {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function ResultScreen(): React.ReactNode {
   const showFacilities = tierKey !== "SELF_CARE";
   const urgent = tierKey === "EMERGENCY" || tierKey === "GO_NOW";
   const verifiedPatient = getPatientSession()?.verificationStatus === "VERIFIED";
+  const locale = getLocale();
+  const location = reportedLocation(report.encounter.answers, locale);
 
   // SELF_CARE danger-sign list: all red-flag labels except those that fired
   const dangerSigns: string[] = tierKey === "SELF_CARE"
@@ -50,6 +53,22 @@ export default function ResultScreen(): React.ReactNode {
     <ScrollView>
       <TierBanner tier={tierKey} />
       <View style={styles.body}>
+        <Card heading={locale === "mr" ? "तुम्ही सांगितलेले ठिकाण" : locale === "hi" ? "आपने बताई जगह" : "Location you reported"}>
+          <Text style={styles.reason}>
+            {locale === "mr"
+              ? `तुम्ही सांगितले की त्रास येथे सर्वात जास्त आहे: ${location}`
+              : locale === "hi"
+              ? `आपने बताया कि तकलीफ़ यहाँ सबसे ज़्यादा है: ${location}`
+              : `You reported that the problem is strongest here: ${location}`}
+          </Text>
+          <Text style={styles.locationNotice}>
+            {locale === "mr"
+              ? "हे तुम्ही निवडलेले ठिकाण आहे. यावरून कोणताही आजार किंवा शरीरातील अंतर्गत अवयव ओळखला जात नाही."
+              : locale === "hi"
+              ? "यह जगह आपकी दी हुई जानकारी है। यह किसी बीमारी या अंदरूनी अंग की पहचान नहीं है।"
+              : "This is the area you selected. It does not identify a disease or an internal organ."}
+          </Text>
+        </Card>
         {result.advice.length > 0 && (
           <Card heading={t("triage.whyThis")}>
             {result.advice.map((r, i) => (
@@ -98,6 +117,7 @@ export default function ResultScreen(): React.ReactNode {
 const styles = StyleSheet.create({
   body: { padding: space.md },
   reason: { ...(type.body as object), color: ink.body, marginBottom: space.xs },
+  locationNotice: { ...(type.meta as object), color: ink.muted },
   watchHelp: { ...(type.body as object), color: ink.body, marginBottom: space.sm },
   dangerSign: { ...(type.body as object), fontWeight: "600", marginBottom: space.xs },
   offlineNote: { ...(type.meta as object), color: ink.body, textAlign: "center", marginTop: space.md },

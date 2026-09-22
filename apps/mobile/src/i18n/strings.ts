@@ -61,7 +61,9 @@
  *   5. export function plural(n: number, one: string, many: string): string
  */
 
-export type Locale = "hi" | "en";
+import { MARATHI_STRINGS } from "./marathi.ts";
+
+export type Locale = "hi" | "mr" | "en";
 
 /** Every user-visible string in the app. Add here, never inline in a screen. */
 export const STRINGS = {
@@ -93,14 +95,15 @@ export const STRINGS = {
   "ivr.title": { hi: "आवाज़ से लक्षण जाँचें", en: "Voice-guided symptom check" },
   "ivr.language.title": { hi: "आवाज़ की भाषा चुनें", en: "Choose the voice language" },
   "ivr.language.help": {
-    hi: "हिंदी के लिए 1 दबाएँ। अंग्रेज़ी के लिए 2 दबाएँ।",
-    en: "Press 1 for Hindi. Press 2 for English.",
+    hi: "हिंदी के लिए 1, मराठी के लिए 2 और अंग्रेज़ी के लिए 3 दबाएँ।",
+    en: "Press 1 for Hindi, 2 for Marathi, or 3 for English.",
   },
   "ivr.language.spoken": {
-    hi: "Choose a voice language. Press 1 for Hindi. Press 2 for English. आवाज़ की भाषा चुनें। हिंदी के लिए एक दबाएँ। अंग्रेज़ी के लिए दो दबाएँ।",
-    en: "Choose a voice language. Press 1 for Hindi. Press 2 for English. आवाज़ की भाषा चुनें। हिंदी के लिए एक दबाएँ। अंग्रेज़ी के लिए दो दबाएँ।",
+    hi: "आवाज़ की भाषा चुनें। हिंदी के लिए एक, मराठी के लिए दो और अंग्रेज़ी के लिए तीन दबाएँ।",
+    en: "Choose a voice language. Press 1 for Hindi, 2 for Marathi, or 3 for English.",
   },
   "ivr.language.hindi": { hi: "हिंदी", en: "हिंदी" },
+  "ivr.language.marathi": { hi: "मराठी", en: "मराठी" },
   "ivr.language.english": { hi: "English", en: "English" },
   "ivr.intro.title": { hi: "शुरू करने से पहले", en: "Before you start" },
   "ivr.intro.body": {
@@ -405,6 +408,10 @@ let locale: Locale = "en";
 export function setLocale(l: Locale): void { locale = l; }
 export function getLocale(): Locale { return locale; }
 
+export function inLocale(copy: Record<Locale, string>): string {
+  return copy[locale];
+}
+
 export function t(key: StringKey, vars?: Record<string, string | number>): string {
   // TierBanner and FreshnessChip build keys by concatenation and cast to
   // StringKey, so an unexpected tier or band reaches here as a missing key.
@@ -412,7 +419,9 @@ export function t(key: StringKey, vars?: Record<string, string | number>): strin
   // the top of this file is that a missing string degrades, never crashes.
   const entry = STRINGS[key] as Record<string, string> | undefined;
   if (!entry) return key as string;
-  const str0: string = entry[locale] ?? entry["en"] ?? (key as string);
+  const str0: string = locale === "mr"
+    ? MARATHI_STRINGS[key]
+    : entry[locale] ?? entry["en"] ?? (key as string);
   if (!vars) return str0;
   return Object.entries(vars).reduce((s, [k, v]) => s.replace(new RegExp("{" + k + "}", "g"), String(v)), str0);
 }

@@ -16,20 +16,21 @@ function expiry(): Date {
 const copy = {
   consent: {
     hi: 'यह एक स्वचालित प्रोटोटाइप सेवा है। यह निदान या आपातकालीन सहायता नहीं देती और कॉल रिकॉर्ड नहीं की जाती। जानकारी ASHA कार्यकर्ता के फ़ॉलो-अप के लिए रखी जाएगी। सहमत हों तो 1, मना करने के लिए 2 दबाएँ।',
+    mr: 'ही स्वयंचलित प्रात्यक्षिक सेवा आहे. ती निदान किंवा आपत्कालीन मदत देत नाही आणि कॉल रेकॉर्ड केला जात नाही. आशा कार्यकर्तीच्या पाठपुराव्यासाठी माहिती जतन केली जाईल. सहमत असल्यास १ आणि नकार देण्यासाठी २ दाबा.',
     en: 'This is an automated prototype. It does not diagnose or provide emergency assistance, and this call is not recorded. Information will be stored for ASHA follow-up. Press 1 to consent or 2 to decline.',
   },
-  relationship: { hi: 'अपने लिए कॉल कर रहे हैं तो 1, किसी और के लिए 2 दबाएँ।', en: 'Press 1 if calling for yourself, or 2 for someone else.' },
-  village: { hi: 'अपने गाँव का अंक कोड डालें और फिर हैश दबाएँ।', en: 'Enter your village numeric code, then press hash.' },
-  category: { hi: 'सामान्य स्वास्थ्य चिंता के लिए 1, माता या बच्चे के लिए 2, दवा या सेवा सहायता के लिए 3, अन्य या निश्चित नहीं के लिए 4 दबाएँ।', en: 'Press 1 for a general health concern, 2 for a maternal or child concern, 3 for medicine or service help, or 4 for other or unsure.' },
-  duration: { hi: 'चिंता आज शुरू हुई तो 1, एक से तीन दिन के लिए 2, तीन दिन से अधिक के लिए 3, पता नहीं के लिए 4 दबाएँ।', en: 'Press 1 if it started today, 2 for one to three days, 3 for more than three days, or 4 if unknown.' },
-  callbackChoice: { hi: 'इसी नंबर पर वापस कॉल की अनुमति के लिए 1, दूसरा नंबर डालने के लिए 2, वापस कॉल की अनुमति न देने के लिए 3 दबाएँ।', en: 'Press 1 to allow a callback to this number, 2 to enter another number, or 3 to give no callback permission.' },
-  callbackNumber: { hi: 'वापस कॉल का नंबर डालें और फिर हैश दबाएँ।', en: 'Enter the callback number, then press hash.' },
-  submitted: { hi: 'आपकी जानकारी भेज दी गई है। ASHA कार्यकर्ता उपलब्ध होने पर फ़ॉलो-अप करेंगे।', en: 'Your information has been submitted. An ASHA worker will follow up when available.' },
-  human: { hi: 'इनपुट पूरा नहीं हो सका। उपलब्ध जानकारी मानव फ़ॉलो-अप के लिए भेजी गई है।', en: 'The keypad intake could not be completed. Available information was sent for human follow-up.' },
-  failure: { hi: 'इनपुट पूरा नहीं हो सका। कृपया बाद में फिर कॉल करें या स्थानीय मानव सहायता लें।', en: 'The keypad intake could not be completed. Please call again later or seek local human assistance.' },
-  declined: { hi: 'कोई स्वास्थ्य जानकारी जमा नहीं की गई। धन्यवाद।', en: 'No health information was submitted. Thank you.' },
-  invalid: { hi: 'वह विकल्प मान्य नहीं है।', en: 'That option is not valid.' },
-  timeout: { hi: 'कोई इनपुट नहीं मिला।', en: 'No input was received.' },
+  relationship: { hi: 'अपने लिए कॉल कर रहे हैं तो 1, किसी और के लिए 2 दबाएँ।', mr: 'स्वतःसाठी कॉल करत असल्यास १ आणि दुसऱ्या व्यक्तीसाठी २ दाबा.', en: 'Press 1 if calling for yourself, or 2 for someone else.' },
+  village: { hi: 'अपने गाँव का अंक कोड डालें और फिर हैश दबाएँ।', mr: 'तुमच्या गावाचा अंकी कोड टाका आणि नंतर हॅश दाबा.', en: 'Enter your village numeric code, then press hash.' },
+  category: { hi: 'सामान्य स्वास्थ्य चिंता के लिए 1, माता या बच्चे के लिए 2, दवा या सेवा सहायता के लिए 3, अन्य या निश्चित नहीं के लिए 4 दबाएँ।', mr: 'सामान्य आरोग्यविषयक काळजीसाठी १, आई किंवा बाळासाठी २, औषध किंवा आरोग्य सेवेसाठी ३ आणि इतर किंवा माहीत नसल्यास ४ दाबा.', en: 'Press 1 for a general health concern, 2 for a maternal or child concern, 3 for medicine or service help, or 4 for other or unsure.' },
+  duration: { hi: 'चिंता आज शुरू हुई तो 1, एक से तीन दिन के लिए 2, तीन दिन से अधिक के लिए 3, पता नहीं के लिए 4 दबाएँ।', mr: 'त्रास आज सुरू झाला असल्यास १, एक ते तीन दिवसांसाठी २, तीन दिवसांपेक्षा जास्त असल्यास ३ आणि माहीत नसल्यास ४ दाबा.', en: 'Press 1 if it started today, 2 for one to three days, 3 for more than three days, or 4 if unknown.' },
+  callbackChoice: { hi: 'इसी नंबर पर वापस कॉल की अनुमति के लिए 1, दूसरा नंबर डालने के लिए 2, वापस कॉल की अनुमति न देने के लिए 3 दबाएँ।', mr: 'याच क्रमांकावर परत फोन करण्याची परवानगी देण्यासाठी १, दुसरा क्रमांक देण्यासाठी २ आणि परत फोन नको असल्यास ३ दाबा.', en: 'Press 1 to allow a callback to this number, 2 to enter another number, or 3 to give no callback permission.' },
+  callbackNumber: { hi: 'वापस कॉल का नंबर डालें और फिर हैश दबाएँ।', mr: 'परत फोन करण्याचा क्रमांक टाका आणि नंतर हॅश दाबा.', en: 'Enter the callback number, then press hash.' },
+  submitted: { hi: 'आपकी जानकारी भेज दी गई है। ASHA कार्यकर्ता उपलब्ध होने पर फ़ॉलो-अप करेंगे।', mr: 'तुमची माहिती पाठवली आहे. आशा कार्यकर्ती उपलब्ध झाल्यावर पाठपुरावा करेल.', en: 'Your information has been submitted. An ASHA worker will follow up when available.' },
+  human: { hi: 'इनपुट पूरा नहीं हो सका। उपलब्ध जानकारी मानव फ़ॉलो-अप के लिए भेजी गई है।', mr: 'माहिती भरणे पूर्ण झाले नाही. उपलब्ध माहिती मानवी पाठपुराव्यासाठी पाठवली आहे.', en: 'The keypad intake could not be completed. Available information was sent for human follow-up.' },
+  failure: { hi: 'इनपुट पूरा नहीं हो सका। कृपया बाद में फिर कॉल करें या स्थानीय मानव सहायता लें।', mr: 'माहिती भरणे पूर्ण झाले नाही. कृपया नंतर पुन्हा कॉल करा किंवा स्थानिक व्यक्तीकडून मदत घ्या.', en: 'The keypad intake could not be completed. Please call again later or seek local human assistance.' },
+  declined: { hi: 'कोई स्वास्थ्य जानकारी जमा नहीं की गई। धन्यवाद।', mr: 'कोणतीही आरोग्य माहिती जतन केली नाही. धन्यवाद.', en: 'No health information was submitted. Thank you.' },
+  invalid: { hi: 'वह विकल्प मान्य नहीं है।', mr: 'तो पर्याय वैध नाही.', en: 'That option is not valid.' },
+  timeout: { hi: 'कोई इनपुट नहीं मिला।', mr: 'कोणतीही निवड मिळाली नाही.', en: 'No input was received.' },
 } as const;
 
 function language(call: repo.IvrCall): IvrLanguage { return call.language ?? 'hi'; }
@@ -45,7 +46,7 @@ function hangup(call: repo.IvrCall, key: string, text: string): IvrProviderRespo
 function basePrompt(call: repo.IvrCall): IvrProviderResponse {
   const lang = language(call);
   switch (call.state) {
-    case 'LANGUAGE': return gather(call,'language','हिन्दी के लिए 1 दबाएँ। Press 2 for English.');
+    case 'LANGUAGE': return gather(call,'language','हिन्दी के लिए 1 दबाएँ। मराठीसाठी 2 दाबा. Press 3 for English.');
     case 'CONSENT': return gather(call,'consent',copy.consent[lang]);
     case 'RELATIONSHIP': return gather(call,'relationship',copy.relationship[lang]);
     case 'VILLAGE': return gather(call,'village',copy.village[lang],1,8,'#');

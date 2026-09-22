@@ -9,7 +9,7 @@ export interface IvrCall {
   provider_call_id: string;
   caller_phone: string | null;
   state: IvrState;
-  language: 'hi'|'en'|null;
+  language: 'hi'|'mr'|'en'|null;
   responses: Record<string,string>;
   invalid_attempts: number;
   timeout_attempts: number;

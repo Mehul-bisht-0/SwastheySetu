@@ -23,6 +23,7 @@ import type {
 } from "@swasthyasetu/core";
 
 import { reset, setPatient, toggleSymptom } from "../../src/state/triageDraft.ts";
+import { saveLocalePreference } from "../../src/db/dao/preferences.ts";
 import {
   getLocale,
   setLocale,
@@ -173,6 +174,7 @@ export default function IvrScreen(): React.ReactNode {
 
   function chooseLanguage(nextLocale: Locale): void {
     setLocale(nextLocale);
+    saveLocalePreference(nextLocale);
     setScreenLocale(nextLocale);
     setStep("INTRO");
   }
@@ -196,14 +198,21 @@ export default function IvrScreen(): React.ReactNode {
       return;
     }
     setPregnancy("no");
-    setSymptomIndex(0);
-    setStep("SYMPTOM");
+    beginQuestionnaire(nextSex, "no");
   }
 
   function choosePregnancy(nextPregnancy: Pregnancy): void {
+    if (sex === null) return;
     setPregnancy(nextPregnancy);
-    setSymptomIndex(0);
-    setStep("SYMPTOM");
+    beginQuestionnaire(sex, nextPregnancy);
+  }
+
+  function beginQuestionnaire(nextSex: Sex, nextPregnancy: Pregnancy): void {
+    if (!ageIsValid || ageMonths === null) return;
+    reset();
+    setPatient({ ageMonths, sex: nextSex, pregnancy: nextPregnancy });
+    stopVoicePrompt();
+    router.replace({ pathname: "/(citizen)/questions", params: { voice: "1" } });
   }
 
   function saveAndShowResult(symptoms: SymptomCode[]): void {
@@ -276,7 +285,8 @@ export default function IvrScreen(): React.ReactNode {
           <Text style={styles.help}>{t("ivr.language.help")}</Text>
           <View style={styles.choices}>
             <KeyChoice digit="1" label={t("ivr.language.hindi")} onPress={() => chooseLanguage("hi")} />
-            <KeyChoice digit="2" label={t("ivr.language.english")} onPress={() => chooseLanguage("en")} />
+            <KeyChoice digit="2" label={t("ivr.language.marathi")} onPress={() => chooseLanguage("mr")} />
+            <KeyChoice digit="3" label={t("ivr.language.english")} onPress={() => chooseLanguage("en")} />
           </View>
         </View>
       ) : null}

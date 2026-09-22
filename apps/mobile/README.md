@@ -48,16 +48,18 @@ walkthrough in `docs/DEMO.md` is the real acceptance test for this app.
 
 ```
 app/                    expo-router routes; the folder structure is the navigation
-  (citizen)/            no login, no account — patient → symptoms → questions → result → facilities
+  (citizen)/            public — patient context → 15 adaptive questions → result → facilities
   (asha)/               requires a cached session token, not a live server check
 src/
   theme/tokens.ts       the design system. Colour means clinical urgency and nothing else.
-  i18n/strings.ts       every user-visible string, Hindi and English
+  i18n/strings.ts       shared user-visible strings, Hindi and English
+  i18n/marathi.ts       complete Marathi language pack for shared strings
   ui/                   primitives; TierBanner and FreshnessChip are the safety-critical two
   db/                   SQLite schema, the outbox, and the DAOs
   sync/                 the push/pull runner and connectivity
   api/client.ts         the only file that calls fetch()
   state/                session and the in-progress triage draft
+  ivr/questionnaire.ts  shared adaptive questions, body-location tree and Encounter mapping
 ```
 
 ## Three rules for anything added here

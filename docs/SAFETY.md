@@ -32,6 +32,23 @@ readable predicate, and changing a rule changes a test.
 The system never names a disease. `apps/api/test/triage.test.ts` greps API responses for disease
 names, and the wording rules in `apps/mobile/src/i18n/strings.ts` cover the screens.
 
+### Adaptive intake and reported body location
+
+The mobile intake is versioned as `intake-v1.0.0` and normally asks 15 questions after age, sex
+and possible pregnancy are confirmed. Emergency red flags interrupt it immediately; a fixed
+question count is never allowed to delay an emergency result.
+
+Body region, side and subregion are stored as answers supplied by the user. They do not identify
+an internal organ, change urgency, select a facility or produce a diagnosis. “Multiple areas”,
+“all over” and “not sure” are valid final locations because systemic complaints cannot honestly
+be forced onto one body part.
+
+**No clinician has reviewed or approved the new intake wording or its answer-to-code mappings.**
+The mapper only targets the existing released symptom codes and answer ids; the ruleset and its
+thresholds were not changed. Generic weakness is not treated as sudden one-sided weakness, and
+generic pain becomes an existing location-specific code only after the corresponding location
+and severity have been explicitly supplied.
+
 ## 3. Red-flag rule provenance
 
 Ruleset `redflags-v1.0.0`. Fourteen rules, all derived from published IMNCI / WHO danger-sign

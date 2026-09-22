@@ -28,7 +28,8 @@ export default function FacilitiesScreen(): React.ReactNode {
   const [locationSource, setLocationSource] = useState<LocationSource | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState(false);
-  const hindi = getLocale() === "hi";
+  const locale = getLocale();
+  const copy = (en: string, hi: string, mr: string): string => locale === "mr" ? mr : locale === "hi" ? hi : en;
 
   async function ensureFacilityData(): Promise<void> {
     if (cachedFacilityCount() > 0) return;
@@ -132,11 +133,11 @@ export default function FacilitiesScreen(): React.ReactNode {
 
   if (!near) return (
     <Screen title={t("facilities.title")} onBack={() => safeBack(router, "/(patient)/home")}>
-      <Text style={styles.callFirst}>{hindi ? "नज़दीकी केंद्रों की दूरी के लिए अपनी जगह साझा करें।" : "Share your location to calculate distances to nearby facilities."}</Text>
-      <Button label={hindi ? "मेरी जगह का उपयोग करें" : "Use my location"} busy={locating} onPress={() => void locate()} />
-      {locationError ? <Text style={styles.empty}>{hindi ? "जगह नहीं मिल सकी। नीचे नालंदा के डेमो केंद्र दिखाए जा सकते हैं।" : "Could not get your location. You can still view the Nalanda demo centres below."}</Text> : null}
-      <Button label={hindi ? "नालंदा के डेमो केंद्र दिखाएँ" : "Show Nalanda demo centres"} variant="secondary" disabled={locating} onPress={() => void showDemo()} />
-      {villages.length > 0 ? <Text style={styles.callFirst}>{hindi ? "या अपना गाँव चुनें।" : "Or choose your village."}</Text> : null}
+      <Text style={styles.callFirst}>{copy("Share your location to calculate distances to nearby facilities.", "नज़दीकी केंद्रों की दूरी के लिए अपनी जगह साझा करें।", "जवळच्या केंद्रांचे अंतर मोजण्यासाठी तुमचे ठिकाण शेअर करा.")}</Text>
+      <Button label={copy("Use my location", "मेरी जगह का उपयोग करें", "माझे ठिकाण वापरा")} busy={locating} onPress={() => void locate()} />
+      {locationError ? <Text style={styles.empty}>{copy("Could not get your location. You can still view the Nalanda demo centres below.", "जगह नहीं मिल सकी। नीचे नालंदा के डेमो केंद्र दिखाए जा सकते हैं।", "तुमचे ठिकाण मिळू शकले नाही. खाली नालंदामधील प्रात्यक्षिक केंद्रे पाहू शकता.")}</Text> : null}
+      <Button label={copy("Show Nalanda demo centres", "नालंदा के डेमो केंद्र दिखाएँ", "नालंदामधील प्रात्यक्षिक केंद्रे दाखवा")} variant="secondary" disabled={locating} onPress={() => void showDemo()} />
+      {villages.length > 0 ? <Text style={styles.callFirst}>{copy("Or choose your village.", "या अपना गाँव चुनें।", "किंवा तुमचे गाव निवडा.")}</Text> : null}
       {villages.map((village) => <Button key={village.villageId} label={village.name} variant="secondary" disabled={locating} onPress={() => void chooseVillage(village)} />)}
     </Screen>
   );
@@ -145,20 +146,20 @@ export default function FacilitiesScreen(): React.ReactNode {
     return (
       <Screen title={t("facilities.title")} onBack={() => safeBack(router, "/(patient)/home")}>
         <Text style={styles.empty}>{t("facilities.empty")}</Text>
-        <Button label={hindi ? "नालंदा के डेमो केंद्र दिखाएँ" : "Show Nalanda demo centres"} variant="secondary" busy={locating} onPress={() => void showDemo()} />
+        <Button label={copy("Show Nalanda demo centres", "नालंदा के डेमो केंद्र दिखाएँ", "नालंदामधील प्रात्यक्षिक केंद्रे दाखवा")} variant="secondary" busy={locating} onPress={() => void showDemo()} />
       </Screen>
     );
   }
 
   return (
     <Screen title={t("facilities.title")} scroll={false} onBack={() => safeBack(router, "/(patient)/home")}>
-      {locationSource === "DEVICE" ? <Text style={styles.sourceNotice}>{hindi ? "दूरी आपके फ़ोन की मौजूदा जगह से अनुमानित है।" : "Distances are estimated from this phone's current location."}</Text> : null}
-      {locationSource === "DEMO_LOCATION_FAILED" ? <Text style={styles.warning}>{hindi ? "फ़ोन की जगह नहीं मिली। नालंदा के डेमो केंद्र दिखाए गए हैं—ये आपकी मौजूदा जगह के पास होने का दावा नहीं हैं।" : "Device location could not be used. Showing Nalanda demo centres; these are not claimed to be near your current location."}</Text> : null}
-      {locationSource === "DEMO_NO_LOCAL_DATA" ? <Text style={styles.warning}>{hindi ? "आपकी जगह के 25 किमी में कोई कैश किया हुआ डेमो रिकॉर्ड नहीं मिला। नालंदा के डेमो केंद्र दिखाए गए हैं।" : "No cached demo record was found within 25 km of your location. Showing the Nalanda demo centres instead."}</Text> : null}
-      {locationSource === "DEMO_SELECTED" ? <Text style={styles.warning}>{hindi ? "नालंदा के डेमो केंद्र दिखाए गए हैं। दूरी आपकी मौजूदा जगह से नहीं है।" : "Showing Nalanda demo centres. Distances are not from your current location."}</Text> : null}
-      <Text style={styles.callFirst}>{hindi ? "डेमो केंद्र और अभ्यास की रिपोर्ट — जानकारी फ़ोन पर जाँचें।" : "Demo facility records and simulated reports. Confirm details by phone."}</Text>
+      {locationSource === "DEVICE" ? <Text style={styles.sourceNotice}>{copy("Distances are estimated from this phone's current location.", "दूरी आपके फ़ोन की मौजूदा जगह से अनुमानित है।", "अंतर या फोनच्या सध्याच्या ठिकाणावरून अंदाजे मोजले आहे.")}</Text> : null}
+      {locationSource === "DEMO_LOCATION_FAILED" ? <Text style={styles.warning}>{copy("Device location could not be used. Showing Nalanda demo centres; these are not claimed to be near your current location.", "फ़ोन की जगह नहीं मिली। नालंदा के डेमो केंद्र दिखाए गए हैं—ये आपकी मौजूदा जगह के पास होने का दावा नहीं हैं।", "फोनचे ठिकाण वापरता आले नाही. नालंदामधील प्रात्यक्षिक केंद्रे दाखवत आहोत; ती तुमच्या सध्याच्या ठिकाणाजवळ आहेत असा दावा नाही.")}</Text> : null}
+      {locationSource === "DEMO_NO_LOCAL_DATA" ? <Text style={styles.warning}>{copy("No cached demo record was found within 25 km of your location. Showing the Nalanda demo centres instead.", "आपकी जगह के 25 किमी में कोई कैश किया हुआ डेमो रिकॉर्ड नहीं मिला। नालंदा के डेमो केंद्र दिखाए गए हैं।", "तुमच्या ठिकाणापासून २५ किमीमध्ये कोणतीही साठवलेली प्रात्यक्षिक नोंद मिळाली नाही. त्याऐवजी नालंदामधील केंद्रे दाखवत आहोत.")}</Text> : null}
+      {locationSource === "DEMO_SELECTED" ? <Text style={styles.warning}>{copy("Showing Nalanda demo centres. Distances are not from your current location.", "नालंदा के डेमो केंद्र दिखाए गए हैं। दूरी आपकी मौजूदा जगह से नहीं है।", "नालंदामधील प्रात्यक्षिक केंद्रे दाखवत आहोत. अंतर तुमच्या सध्याच्या ठिकाणावरून नाही.")}</Text> : null}
+      <Text style={styles.callFirst}>{copy("Demo facility records and simulated reports. Confirm details by phone.", "डेमो केंद्र और अभ्यास की रिपोर्ट — जानकारी फ़ोन पर जाँचें।", "प्रात्यक्षिक केंद्रांच्या नोंदी आणि सराव अहवाल. फोनवर माहितीची खात्री करा.")}</Text>
       <Text style={styles.callFirst}>{t("freshness.callFirst")}</Text>
-      {locationSource?.startsWith("DEMO_") ? <Button label={hindi ? "मेरी जगह फिर कोशिश करें" : "Try my location again"} variant="secondary" busy={locating} onPress={() => void locate()} /> : null}
+      {locationSource?.startsWith("DEMO_") ? <Button label={copy("Try my location again", "मेरी जगह फिर कोशिश करें", "माझे ठिकाण पुन्हा वापरून पाहा")} variant="secondary" busy={locating} onPress={() => void locate()} /> : null}
       {outcome?.fallbackApplied ? <Text style={styles.fallback}>{t("facilities.fallbackApplied")}</Text> : null}
       <FlatList
         data={facilities}
