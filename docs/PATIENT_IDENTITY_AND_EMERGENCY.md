@@ -104,6 +104,11 @@ rejected when `NODE_ENV=production`. A live implementation requires ABDM HIU onb
 Manager flow, signed callbacks, FHIR R4 health-information exchange, encryption/key management,
 purpose and retention approval, revocation handling, and a clinically approved ambulance workflow.
 
+Migration 019 and the `mock-abdm` module extend this boundary with a synthetic longitudinal-care
+simulator: mock HFR/HPR registries, linked care contexts, ABDM-shaped FHIR R4 documents, granular
+time-bounded consent, immutable access history, encrypted expiring provider care packets and
+closed-loop referrals. This remains development-only and does not change the production gates below.
+
 ABDM's official FAQ explains that ABHA supports identification and consent-based record sharing, and
 that consent can be granular and time-bound:
 https://abdm.gov.in/FAQ

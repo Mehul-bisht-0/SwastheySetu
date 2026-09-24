@@ -118,3 +118,35 @@ SQLite file that any backup tool will copy off the device.
 
 No LLM credential exists anywhere in `apps/mobile`; `scripts/check-no-secrets.mjs` fails the build
 if one appears.
+
+## 7. Mock ABDM records and consent
+
+Every provider, patient, ABHA, HFR, HPR, coverage and clinical record in the mock network is
+synthetic. The simulator is not connected to NHA and is not certified for ABDM exchange. ABHA is
+an identifier and consent mechanism; the card itself is never described as containing a complete
+medical history.
+
+Providers receive only linked record types and dates covered by an active grant. There is no
+break-glass path. Revocation blocks new server reads immediately. Downloaded care packets expire no
+later than the grant, use browser encryption when supported, and are removed on sign-out or detected
+revocation. This prototype does not replace production key-management, retention or threat review.
+
+FHIR fixtures are standards-shaped demonstration documents. Clinical facts are entered by a
+practitioner or loaded from conspicuously fictional seed data; no model creates diagnoses,
+prescriptions, results or referral reasons.
+
+## 8. Diagnostic coordination and weak connectivity
+
+Diagnostic catalog entries and service reports form a directory, not a recommendation engine or a
+live guarantee. Doctors select services and priority. Overdue flags compare promised operational
+timestamps with recorded events; they are not predictions of clinical risk. ASHAs can submit only
+attributed field observations and cannot read patient orders or change catalog definitions.
+
+Offline mode never creates or expands consent. Patient decisions recorded without connectivity are
+labelled pending until accepted by the server. Provider packets and queued clinical operations use
+device-bound encrypted storage and are purged on sign-out; the patient diagnostic snapshot uses the
+operating system's encrypted SecureStore and is removed on sign-out or key failure.
+
+The mock SMS and IVR flows disclose only a tracking code and operational state. They never transmit
+test names, conditions, clinical notes, result values or consent decisions. Live carrier, LIS/RIS
+and analyser integrations remain deferred behind adapters.

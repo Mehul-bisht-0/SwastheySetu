@@ -20,6 +20,7 @@ export * as asha from "./asha.ts";
 export * as sync from "./sync.ts";
 export * as rag from "./rag.ts";
 export * as patients from "./patients.ts";
+export * as abdm from "./abdm.ts";
 
 // Envelope helpers are used by every route and every client call, so they are
 // also available unqualified.

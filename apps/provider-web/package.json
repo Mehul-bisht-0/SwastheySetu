@@ -1,0 +1,9 @@
+{
+  "name": "@swasthyasetu/provider-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "tsc -b && vite build", "typecheck": "tsc --noEmit" },
+  "dependencies": { "@swasthyasetu/contracts": "0.1.0", "@vitejs/plugin-react": "latest", "vite": "latest", "react": "19.2.8", "react-dom": "19.2.8" },
+  "devDependencies": { "@types/react": "19.2.4", "@types/react-dom": "19.2.3", "typescript": "^5.8.3" }
+}

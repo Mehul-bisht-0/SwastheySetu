@@ -97,6 +97,16 @@ ledger keyed on that UUID makes a replay a no-op that returns the original answe
 None of this is novel and that is the point. It is the well-understood solution, applied properly,
 to the failure mode that actually occurs.
 
+Patient consent/context changes, provider clinical operations and ASHA diagnostic observations use
+separate additive outboxes. Each operation has a stable UUID, immutable body, retry state and an
+explicit server result. `OFFLINE`, `LIMITED` and `ONLINE` describe transport state; they never alter
+authorization. In particular, an offline approval remains pending and grants no provider access.
+
+The diagnostic module is operational rather than clinical. It stores an exact coded service
+directory, time-stamped positive and negative evidence, doctor-entered ServiceRequests, appointment
+and specimen events, and producer-HIP DiagnosticReports. It neither selects tests nor interprets
+results. Search has no generic fallback, and evidence copy never claims live availability.
+
 ## Why travel times are precomputed
 
 Live routing would be marginally more accurate and would make the core feature depend on a service
@@ -109,10 +119,21 @@ than inventing a number.
 
 ## What was deliberately not built
 
-No message queue, no cache layer, no microservices, no analytics pipeline, no admin dashboard.
+No message queue, no shared cache layer, no microservices, and no population-health analytics pipeline.
 None of them makes the vertical slice work, and each is a component that can be down during a
 demo. Guardrail 9 exists because infrastructure is the most common way a hackathon project
 becomes impressive and non-functional at the same time.
+
+## The mock ABDM continuity boundary
+
+ABHA is treated as an identity and consent key, not as a medical-record database. The development
+simulator keeps records at logical facility HIPs, grants an HIU only the record types and date range
+the patient approved, and logs every read. Canonical ABDM-shaped FHIR R4 documents are stored beside
+a normalized timeline view; neither representation enters triage or facility ranking.
+
+Production ABDM callbacks, key exchange, OTP, and live HFR/HPR lookup are represented by internal
+adapters. Every screen and response labels the network as a development mock that is not NHA
+certified. A live adapter may later replace transport and verification, but not consent or audit.
 
 ## Where this would break at real scale
 

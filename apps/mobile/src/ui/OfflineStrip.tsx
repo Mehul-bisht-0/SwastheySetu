@@ -1,19 +1,19 @@
 ﻿import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { isOnline, onConnectivityChange } from "../sync/netStatus.ts";
+import { getConnectivityState, onConnectivityStateChange, type ConnectivityState } from "../sync/netStatus.ts";
 import { paper, ink, type, space } from "../theme/tokens.ts";
 import { t } from "../i18n/strings.ts";
 
 export function OfflineStrip(): React.ReactNode {
-  const [online, setOnline] = useState(true);
+  const [state, setState] = useState<ConnectivityState>("ONLINE");
   useEffect(() => {
-    isOnline().then(setOnline);
-    return onConnectivityChange(setOnline);
+    void getConnectivityState().then(setState);
+    return onConnectivityStateChange(setState);
   }, []);
-  if (online) return null;
+  if (state === "ONLINE") return null;
   return (
     <View style={styles.strip}>
-      <Text style={styles.text}>{t("net.offlineDetail")}</Text>
+      <Text style={styles.text}>{state === "OFFLINE" ? t("net.offlineDetail") : "Limited connection · सीमित कनेक्शन · मर्यादित कनेक्शन"}</Text>
     </View>
   );
 }

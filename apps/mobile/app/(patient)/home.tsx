@@ -48,6 +48,8 @@ export default function PatientHome(): React.ReactNode {
       <Text style={styles.body}>{abha?.linked ? `Linked: ${abha.identifierMasked ?? "ABHA"}` : "Not linked"}</Text>
       <Text style={styles.meta}>ABHA linking uses consent-based record access. A card photo is not treated as medical history.</Text>
       <Button label={abha?.linked ? "Refresh ABHA emergency summary" : "Link ABHA"} variant="secondary" onPress={() => router.push("/(patient)/abha")} disabled={!verified} />
+      <Button label="Longitudinal records and consent" onPress={() => router.push("/(patient)/records")} disabled={!abha?.linked} />
+      <Button label="Diagnostic orders and reports" variant="secondary" onPress={() => router.push("/(patient)/diagnostics")} />
     </View>
 
     <View style={styles.emergencyCard}>

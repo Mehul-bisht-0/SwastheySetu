@@ -1,0 +1,18 @@
+import React,{useCallback,useState}from"react";
+import{StyleSheet,Text,View}from"react-native";
+import{useFocusEffect,useRouter}from"expo-router";
+import{listDiagnosticReference,pendingDiagnosticSignals,queueDiagnosticSignal,refreshDiagnosticReference,syncDiagnosticSignals,type DiagnosticReference}from"../../src/connectivity/diagnosticSignals.ts";
+import{getSession}from"../../src/state/session.ts";
+import{Button}from"../../src/ui/Button.tsx";
+import{Screen}from"../../src/ui/Screen.tsx";
+import{ink,paper,radius,space,type}from"../../src/theme/tokens.ts";
+
+export default function DiagnosticSignals():React.ReactNode{
+ const router=useRouter(),session=getSession(),[items,setItems]=useState<DiagnosticReference[]>([]),[message,setMessage]=useState("Reported evidence is time-stamped; it is not live availability."),[pending,setPending]=useState(pendingDiagnosticSignals());
+ const load=useCallback(async()=>{if(!session)return;setItems(listDiagnosticReference(session.districtCode));const count=await refreshDiagnosticReference(session.districtCode);if(count)setItems(listDiagnosticReference(session.districtCode));setPending(pendingDiagnosticSignals());},[session]);
+ useFocusEffect(useCallback(()=>{void load();},[load]));
+ function report(serviceId:string,type:"COLLECTION_CONFIRMED"|"STOCK_OUT_REPORTED"|"MACHINE_DOWN_REPORTED"|"COLLECTION_PAUSED_REPORTED"){queueDiagnosticSignal(serviceId,type,"ASHA-attributed field observation; confirm directly before patient travel.");setPending(pendingDiagnosticSignals());setMessage("Saved on this phone. It will remain queued until the server explicitly accepts it.");}
+ async function send(){const sent=await syncDiagnosticSignals();setPending(pendingDiagnosticSignals());setMessage(`${sent} observation(s) accepted; ${pendingDiagnosticSignals()} still queued.`);}
+ return <Screen title="Diagnostic service evidence"><View style={styles.notice}><Text style={styles.bold}>Directory evidence, not availability</Text><Text style={styles.text}>Report only what you personally observed or confirmed. You cannot change the catalog or see patient orders.</Text></View><Text style={styles.meta}>{message}</Text><Button label={`Send now (${pending} queued)`}onPress={()=>void send()}/>{items.map(item=><View style={styles.card}key={item.serviceId}><Text style={styles.bold}>{item.test.display} ({item.test.code})</Text><Text style={styles.text}>{item.facilityName}</Text><Text style={styles.meta}>{item.evidenceText}</Text><Text style={styles.meta}>Reported turnaround {item.turnaroundMinutesMin}–{item.turnaroundMinutesMax} minutes</Text><Button label="Collection confirmed"variant="secondary"onPress={()=>report(item.serviceId,"COLLECTION_CONFIRMED")}/><Button label="Stock-out observed"variant="secondary"onPress={()=>report(item.serviceId,"STOCK_OUT_REPORTED")}/><Button label="Machine down observed"variant="secondary"onPress={()=>report(item.serviceId,"MACHINE_DOWN_REPORTED")}/><Button label="Collection paused"variant="secondary"onPress={()=>report(item.serviceId,"COLLECTION_PAUSED_REPORTED")}/></View>)}<Button label="Back"variant="secondary"onPress={()=>router.back()}/></Screen>;
+}
+const styles=StyleSheet.create({notice:{backgroundColor:paper.sunken,borderColor:paper.rule,borderWidth:1,borderRadius:radius.card,padding:space.md,gap:space.sm,marginBottom:space.md},card:{backgroundColor:paper.raised,borderColor:paper.rule,borderWidth:1,borderRadius:radius.card,padding:space.md,gap:space.sm,marginVertical:space.sm},bold:{...(type.body as object),fontWeight:"800",color:ink.strong},text:{...(type.body as object),color:ink.body},meta:{...(type.meta as object),color:ink.muted,marginBottom:space.sm}});

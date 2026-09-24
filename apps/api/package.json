@@ -12,7 +12,8 @@
     "seed": "node --disable-warning=ExperimentalWarning --env-file=../../.env ../../infra/seed/load.ts",
     "routing:precompute": "node --disable-warning=ExperimentalWarning --env-file=../../.env ../../infra/routing/precompute.ts",
     "test": "node --disable-warning=ExperimentalWarning --env-file=../../.env --test --test-concurrency=1 \"test/**/*.test.ts\"",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "jobs:diagnostics": "node --disable-warning=ExperimentalWarning --env-file=../../.env src/jobs/diagnosticNotifications.ts"
   },
   "dependencies": {
     "@swasthyasetu/contracts": "0.1.0",

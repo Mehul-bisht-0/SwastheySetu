@@ -75,6 +75,14 @@ import { ivrRoutes } from "./modules/ivr/routes.ts";
 import { patientRoutes } from "./modules/patients/routes.ts";
 import { emergencyRoutes } from "./modules/emergencies/routes.ts";
 import { abhaRoutes } from "./modules/abha/routes.ts";
+import { registerProviderAuth } from "./plugins/providerAuth.ts";
+import { providerAuthRoutes } from "./modules/provider-auth/routes.ts";
+import { mockAbdmRoutes } from "./modules/mock-abdm/routes.ts";
+import { providerRecordRoutes } from "./modules/provider-records/routes.ts";
+import { referralRoutes } from "./modules/referrals/routes.ts";
+import { diagnosticRoutes,providerDiagnosticOrderRoutes,providerDiagnosticServiceRoutes,patientDiagnosticRoutes } from "./modules/diagnostics/routes.ts";
+import { providerConnectivityRoutes,patientConnectivityRoutes } from "./modules/connectivity/routes.ts";
+import { diagnosticIvrRoutes } from "./modules/diagnostic-ivr/routes.ts";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -99,6 +107,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // 5. JWT auth plugin
   await registerAuth(app);
+  registerProviderAuth(app);
 
   // 6. Routes
   await app.register(healthRoutes);                      // GET /health
@@ -113,6 +122,17 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(patientRoutes,    { prefix: "/patients" });
   await app.register(emergencyRoutes,  { prefix: "/emergencies" });
   await app.register(abhaRoutes,       { prefix: "/patients/abha" });
+  await app.register(providerAuthRoutes,{ prefix: "/provider/auth" });
+  await app.register(providerRecordRoutes,{ prefix: "/provider" });
+  await app.register(mockAbdmRoutes,   { prefix: "/mock-abdm" });
+  await app.register(referralRoutes,   { prefix: "/referrals" });
+  await app.register(diagnosticRoutes,{prefix:"/diagnostics"});
+  await app.register(providerDiagnosticServiceRoutes,{prefix:"/provider/diagnostic-services"});
+  await app.register(providerDiagnosticOrderRoutes,{prefix:"/provider/diagnostic-orders"});
+  await app.register(patientDiagnosticRoutes,{prefix:"/patients/diagnostics"});
+  await app.register(providerConnectivityRoutes,{prefix:"/provider/sync"});
+  await app.register(patientConnectivityRoutes,{prefix:"/patients/sync"});
+  await app.register(diagnosticIvrRoutes,{prefix:"/ivr/diagnostics"});
 
   return app;
 }

@@ -21,6 +21,13 @@ SwasthyaSetu is an offline-first rural healthcare decision-support prototype for
 | Patient accounts and sign-in | Implemented prototype |
 | Patient identity-verification state | Implemented with a development mock; no documents are collected |
 | ABHA-linked emergency clinical summary | Implemented with explicit consent and a development mock; no card image or full record is stored |
+| Mock ABDM longitudinal records | Implemented — synthetic HFR/HPR registries, linked care contexts, FHIR R4 v6.5-shaped documents and patient audit history |
+| Provider continuity portal | Implemented — consent-scoped timelines, encrypted expiring care packets and provider-authored records |
+| Closed-loop referrals | Implemented — patient-consented receiving-facility workflow from creation through completion |
+| Diagnostic coordination | Implemented mock — exact service directory, evidence age, orders, appointments, specimens, FHIR results and follow-up tracking |
+| Weak-connectivity operation queues | Implemented — separate patient, provider and ASHA diagnostic queues with idempotent acknowledgement and retry |
+| Diagnostic SMS/voice fallback | Implemented with privacy-safe mock adapters; no live carrier is connected |
+| Live ABDM network | **Not integrated** — the simulator is not NHA certified and uses synthetic data only |
 | Verified-patient SOS and nearest-facility dispatch queue | Implemented prototype with auditable status transitions |
 | Patient-consented urgent triage alert metadata | Implemented in the in-app facility-alert simulator; raw questionnaire answers are excluded |
 | Live Aadhaar/face-verification provider | **Not integrated** |
@@ -46,7 +53,7 @@ The mobile app initializes SQLite, recovers interrupted outbox operations, resto
 - Signed out: `/` offers the public symptom check, patient sign-in/registration and ASHA sign-in.
 - Signed-in patient: patient home shows **Check symptoms**, **Use the voice guide**, identity/ABHA controls and emergency actions.
 - Signed-in ASHA worker: `/` redirects to the ASHA home screen.
-- ASHA home contains only Case inbox, Record a visit, Waiting to send, Recent visits and Sign out.
+- ASHA home contains Case inbox, Record a visit, Waiting to send, diagnostic service evidence, Recent visits and Sign out.
 - Signing out returns to the public landing page.
 
 ### Visual patient flow
@@ -241,6 +248,10 @@ The current behavior must not be presented as completed patient-to-ASHA submissi
 | Assignment | `/assignments/*` | Authenticated and role-scoped |
 | IVR | `POST /ivr/webhooks/prototype` | Server-secret-authenticated |
 | RAG | `POST /rag/ask` | Returns `501`; unimplemented |
+| Provider identity | `/provider/auth/*` | Synthetic HPR-linked provider accounts |
+| Mock ABDM | `/mock-abdm/*` | Registry public; provider and patient actions role-scoped |
+| Provider records | `/provider/records`, `/provider/care-packets` | Provider session plus active patient consent |
+| Referrals | `/referrals/*` | Provider workflow; patients read their own progress |
 
 Routes validate HTTP input and delegate work. Business logic belongs in `service.ts`; parameterized SQL belongs in `repo.ts`.
 
@@ -256,9 +267,15 @@ Routes validate HTTP input and delegate work. Business logic belongs in `service
 | `015_verification_face_liveness.sql` | Records that verification requires both offline e-KYC and provider-side face liveness |
 | `016_abha_emergency_summary.sql` | Hashed ABHA link references, time-bound consent, minimal emergency summaries and per-SOS sharing audit |
 | `017_emergency_triage_context.sql` | Patient-consented minimal urgent-triage snapshot attached to an SOS |
+| `018_marathi_language.sql` | Marathi intake and IVR persistence constraints |
+| `019_mock_abdm_continuity.sql` | Synthetic HFR/HPR, FHIR records, consent, audit, care packets, coverage and referrals |
+| `020_mock_abdm_stabilization.sql` | Nullable pre-approval referral consent grant |
+| `021_diagnostic_network.sql` | Diagnostic catalog, evidence, orders, specimens and audit |
+| `022_connectivity_jobs.sql` | Operation ledgers, notification jobs/delivery and diagnostic IVR state |
+| `023_diagnostic_appointments.sql` | Diagnostic appointments and immutable appointment events |
 
-**Migration checkpoint:** 014–017 are additive and are applied in this local development database. Review
-Migration 011’s compatibility plus Migrations 014–017 identity, consent, retention and emergency-operating model
+**Migration checkpoint:** 014–023 are additive. Review Migration 011’s compatibility plus Migrations 014–023
+identity, consent, retention, emergency, ABDM mock, connectivity and diagnostic operating models
 before applying the chain to any shared or production-like database. See
 [docs/MIGRATION_011_REVIEW.md](docs/MIGRATION_011_REVIEW.md).
 
@@ -269,6 +286,7 @@ packages/core        Shared dependency-free decision and routing logic
 packages/contracts   Shared Zod request/response contracts
 apps/api             Fastify API and PostgreSQL repositories
 apps/mobile          Expo app, SQLite and synchronization
+apps/provider-web    Responsive provider PWA and encrypted offline care packets
 infra/migrations     Append-only PostgreSQL migrations
 infra/seed           Synthetic demo data
 infra/routing        Build-time travel precomputation
@@ -303,7 +321,7 @@ On a phone, `localhost` means the phone. Recheck the computer’s Wi-Fi IPv4 add
 
 ### Database safety gate
 
-Do not run `npm run db:migrate` against a new or existing database until Migration 011 has been reviewed for that exact target. The runner applies every migration in order, including 011–017. Test preparation requires `NODE_ENV=test` and a database name ending in `_test`; never point it at a working dataset.
+Do not run `npm run db:migrate` against a new or existing database until Migration 011 has been reviewed for that exact target. The runner applies every migration in order, including 011–023. Test preparation requires `NODE_ENV=test` and a database name ending in `_test`; never point it at a working dataset.
 
 ### Start the API
 
@@ -342,6 +360,31 @@ npm run start -- --clear
 
 Do not run `npx expo start` from the repository root. That makes legacy `expo/AppEntry.js` search for a nonexistent root `App` file. Press `r` to reload and `Ctrl+C` to stop.
 
+### Start the provider continuity portal
+
+```powershell
+npm run dev:provider
+```
+
+The portal defaults to `http://localhost:4000` for the API. Set `VITE_API_URL` when the API is
+elsewhere. It is an ABDM-shaped development simulator, not a connection to NHA.
+
+```text
+Provider: +917101000001 / Provider@demo1!
+Patient:  +917201000001 / Patient@demo1!
+Mock ABHA address: asha.pregnancy@abdm
+```
+
+Providers `+917101000002` through `+917101000010` use the same provider demo password. Synthetic
+patients `+917201000002` through `+917201000006` use the same patient demo password. Never use these
+credential patterns or the seed loader with real data.
+
+The seed also provides 8 exact diagnostic services across 18 facility-service associations and six
+synthetic workflow cases: a scheduled antenatal ultrasound, a hub-and-spoke CBC specimen in transit,
+an HbA1c result awaiting patient care-context linking, a missed chest X-ray appointment, a rejected
+urine specimen and a cross-facility ECG order awaiting consent. Time-stamped service evidence includes
+positive reports, a stock-out report and a machine-down report; none of it represents live availability.
+
 ### Emergency-dispatch prototype
 
 Create a patient account in the app, open identity verification and use the clearly labelled development
@@ -378,6 +421,7 @@ facility notified, request accepted, ambulance dispatched, arrived and completed
 |---|---|
 | `npm run typecheck` | Root packages and API |
 | `npm run typecheck:mobile` | Expo application |
+| `npm run typecheck:provider` | Provider continuity PWA |
 | `npm run test:core` | Decision/routing unit tests |
 | `npm run test:scenarios` | Fixed clinical scenarios |
 | `npm run test:mobile-storage` | Registered outbox regressions |
@@ -438,12 +482,12 @@ Phase 4 also requires approval. It will ingest only approved government/public-h
 
 ### Later work
 
-Only after pilot evidence justifies it: live provider deployment, OSRM road routes, multi-district administration, notifications/jobs, refresh-token rotation and revocation, comprehensive audit reports, reference tombstones, approved encrypted offline case access and ABDM interoperability.
+Only after pilot evidence justifies it: live provider deployment, OSRM road routes, multi-district administration, notifications/jobs, refresh-token rotation, comprehensive audit reports, reference tombstones, production key management and live ABDM interoperability.
 
 ## Known limitations
 
 - Clinical content is unvalidated and has documented coverage gaps.
-- Visual patient confirmation and consent are incomplete.
+- Production identity assurance and consent signing remain incomplete; the implemented consent workflow is explicitly a development mock.
 - Anonymous upload ownership is unresolved.
 - Some patient text is English-only.
 - Case content requires the API.

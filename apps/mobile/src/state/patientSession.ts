@@ -67,6 +67,8 @@ export async function updatePatientProfile(profile: PatientSession): Promise<voi
 }
 
 export async function signOutPatient(): Promise<void> {
+  const { purgePatientConnectivity } = await import("../connectivity/patient.ts");
+  await purgePatientConnectivity();
   await SecureStore.deleteItemAsync(PATIENT_TOKEN_KEY);
   await SecureStore.deleteItemAsync(PATIENT_PROFILE_KEY);
   session = null;

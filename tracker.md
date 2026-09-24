@@ -1,6 +1,6 @@
 # SwasthyaSetu implementation tracker
 
-Updated: 2026-09-03
+Updated: 2026-09-24
 
 This file records phase-gate verification. A phase is marked complete only when its verification command is green. Verification proceeds in the order defined by `IMPLEMENTATION_PLAN.md` §14.1; the next unfinished phase is not started without user input.
 
@@ -15,8 +15,10 @@ This file records phase-gate verification. A phase is marked complete only when 
 | 6 | Ranking + recommendations | Complete | `npm run test:core` passed 126/126; `npm run test:api` passed with 21 passed, 0 failed, and 18 legacy COMPLETE-test skips; API typecheck and routing-index check passed on 2026-09-03 |
 | 7 | Mobile shell + citizen flow | Complete | Mobile typecheck, secret scan, and Android bundle passed. The public nearby endpoint primes the offline facility cache; the user confirmed facilities remain available in the manual airplane-mode flow on 2026-09-03. |
 | 8 | ASHA offline workflow | In progress | Authenticated ASHA API tests, API/mobile typechecks, secret scan, and Android bundle are green. Manual offline force-quit persistence test remains. |
-| 9 | Sync | Not implemented | Explicit `NOT_IMPLEMENTED` bodies remain in sync service and repository |
+| 9 | Sync | Implemented; physical-device gate pending | Existing ASHA push/pull bodies, replay ledger and durable mobile outbox are implemented and automated tests pass; 48-hour/force-quit physical-device test remains |
 | 10 | RAG seam + honesty pass | Not yet verified | Gate: `npm run verify`; RAG remains intentionally unimplemented beyond the 501 seam |
+| 11 | Mock ABDM continuity MVP | Implemented; DB gate pending | API/contracts, patient UI and provider PWA typecheck; Docker was unavailable for applying Migration 019 and seeded end-to-end verification |
+| 12 | Connectivity + diagnostic coordination | Implemented; DB/device gates pending | Additive migrations 020–023, exact service directory, evidence, orders/appointments/specimens/results, patient/provider/ASHA queues, generic IVR/SMS mock and service-worker cache policy compile; full `npm run verify` is green with DB-dependent cases skipped |
 
 ## Open decisions and human inputs
 
@@ -25,6 +27,11 @@ This file records phase-gate verification. A phase is marked complete only when 
 - Red-flag rules require clinician review before use beyond a prototype.
 
 ## Verification log
+
+- 2026-09-24: Implemented the additive diagnostic/connectivity contracts, migrations and deterministic synthetic catalog plus lifecycle seed. The seed now covers 8 services, 18 facility-service links, six order scenarios, specimens, appointments, consent, a FHIR diagnostic result and notification failures. Referral creation and its consent request are now one transaction, with pre-consent referral grants nullable.
+- 2026-09-24: Added provider, patient and ASHA diagnostic workflows. Provider care packets and queued operations use non-exportable Web Crypto keys; the patient snapshot uses native SecureStore; offline consent remains `PENDING_SYNC` in the UI and authorizes nothing.
+- 2026-09-24: Added exact diagnostic service search, time-stamped evidence language, order/appointment/specimen state, ABDM-shaped DiagnosticReport publication, care-context linking, privacy-safe diagnostic IVR and mock notification jobs.
+- 2026-09-24: `npm run verify` passed (typechecks, 126 core tests, scenarios, mobile tests, API tests and secret scan). The Android Hermes export also passed with both immutable `schema.sql` and additive `connectivity.sql` bundled. Database-dependent tests were skipped because the local PostgreSQL service was unavailable; physical airplane-mode/48-hour tests remain outstanding.
 
 - 2026-09-03: Loaded `AGENTS.md` and the phase gates in `IMPLEMENTATION_PLAN.md` §14. No implementation changes made before verification.
 - 2026-09-03: Phase 1 gate passed with `npm run test:core` (126 tests passed, 0 failed). The command also includes later-phase core unit tests; those phases remain unverified until their complete gates pass.

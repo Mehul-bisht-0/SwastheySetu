@@ -47,6 +47,9 @@ export default function HomeScreen(): React.ReactNode {
         <Button label={locale === "mr" ? "प्रकरणांची पेटी" : locale === 'hi' ? 'केस इनबॉक्स' : 'Case inbox'} onPress={() => router.push('./inbox')} />
         <Button label={t("asha.home.newVisit")} onPress={() => router.push("/(asha)/visit")} />
         <Button label={t("asha.home.queue")} variant="secondary" onPress={() => router.push("/(asha)/queue")} />
+        <Button label={locale === "mr" ? "निदान सेवा नोंदवा" : locale === "hi" ? "निदान सेवा की स्थिति दर्ज करें" : "Report diagnostic service evidence"} variant="secondary" onPress={() => router.push("/(asha)/diagnostic-signals")} />
+        <Button label={locale === "mr" ? "रुग्णाला संमती देण्यास मदत करा" : locale === "hi" ? "मरीज़ को सहमति देने में मदद करें" : "Assist patient with consent"} variant="secondary" onPress={() => router.push("/(patient)/login")} />
+        <Text style={styles.meta}>The patient signs in and confirms personally. The ASHA does not receive access to the records.</Text>
       </View>
 
       <Text style={styles.section}>{t("asha.home.recentVisits")}</Text>

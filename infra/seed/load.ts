@@ -57,6 +57,8 @@ import path from "node:path";
 import url from "node:url";
 import pg from "pg";
 import bcrypt from "bcryptjs";
+import { loadAbdmSeed } from "./load-abdm.ts";
+import { loadDiagnosticSeed } from "./load-diagnostics.ts";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
@@ -285,6 +287,8 @@ export async function loadSeed(): Promise<void> {
     // facIds[4] gets NO activity rows => UNKNOWN band
     // facIds[5] optional extra
 
+    await loadAbdmSeed(client, districtCode);
+    const diagnosticSeed = await loadDiagnosticSeed(client, districtCode);
     await client.query("COMMIT");
 
     // Verify geom consistency
@@ -310,7 +314,7 @@ export async function loadSeed(): Promise<void> {
       throw new Error("geom/lat-lon mismatch detected after seed — check ST_MakePoint argument order");
     }
 
-    console.log(`seed complete: 1 district, ${villageCount} villages, ${facilityCount} facilities, 3 users, 4 activity rows`);
+    console.log(`seed complete: 1 district, ${villageCount} villages, ${facilityCount} facilities, 3 workers, 10 providers, 6 synthetic patients, 4 activity rows, ${diagnosticSeed.tests} diagnostic tests, ${diagnosticSeed.services} facility services, ${diagnosticSeed.evidence} evidence events, ${diagnosticSeed.orders} diagnostic orders, ${diagnosticSeed.specimens} specimens, ${diagnosticSeed.appointments} appointments, ${diagnosticSeed.results} result records awaiting care-context linking, ${diagnosticSeed.notifications} notification jobs`);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
