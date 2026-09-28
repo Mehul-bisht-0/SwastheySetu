@@ -1,6 +1,6 @@
 # SwasthyaSetu
 
-SwasthyaSetu is an offline-first rural healthcare decision-support prototype for community members and ASHA workers. It also contains a provider-neutral keypad telephone IVR prototype for callers who have a basic phone or no internet connection.
+SwasthyaSetu is an offline-first rural healthcare decision-support prototype for community members and ASHA workers with a web application for hospitals. It also contains a provider-neutral keypad telephone IVR prototype for callers who have a basic phone or no internet connection.
 
 > **Prototype only. Not clinically validated. Not a diagnostic tool.**
 >
